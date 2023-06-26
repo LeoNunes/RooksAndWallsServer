@@ -3,17 +3,22 @@ package me.leonunes.model
 import me.leonunes.common.SquareCoordinate
 
 sealed interface GameAction {
-    fun process(game: Game)
+    val playerId: Id<Player>
+    suspend fun process(game: GameImp)
 }
 
-data class MoveAction(val piece: Id<Piece>, val position: SquareCoordinate) : GameAction {
-    override fun process(game: Game) {
+data class MoveAction(
+    override val playerId: Id<Player>,
+    val piece: Id<Piece>,
+    val position: SquareCoordinate) : GameAction {
+
+    override suspend fun process(game: GameImp) {
         println("Move action processing")
     }
 }
 
-data class PlacePieceAction(val position: SquareCoordinate) : GameAction {
-    override fun process(game: Game) {
-        println("Place piece action processing")
+data class AddPieceAction(override val playerId: Id<Player>, val position: SquareCoordinate) : GameAction {
+    override suspend fun process(game: GameImp) {
+        game.addPiece(game.getPlayerById(playerId)!!, position)
     }
 }
