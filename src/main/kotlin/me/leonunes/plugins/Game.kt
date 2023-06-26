@@ -10,6 +10,7 @@ import io.ktor.util.reflect.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
+import me.leonunes.common.asId
 import me.leonunes.dto.*
 import me.leonunes.model.*
 import java.nio.charset.Charset
@@ -20,11 +21,11 @@ fun Application.configureGame() {
     routing {
         post<CreateGameRequest> { request ->
             val game = GameFactory.createGame()
-            call.respond(CreateGameResponse(game.id))
+            call.respond(CreateGameResponse(game.id.get()))
         }
 
         webSocket("$apiPathPrefix/game/{gameId}") {
-            val gameId = call.parameters["gameId"]?.toIntOrNull()
+            val gameId : GameId? = call.parameters["gameId"]?.toIntOrNull()?.asId()
             //val spectate = call.parameters["spectate"].toBoolean()
 
             val game = gameId?.let { GameFactory.getGameById(it) }

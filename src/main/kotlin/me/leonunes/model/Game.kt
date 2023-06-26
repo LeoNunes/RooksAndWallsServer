@@ -6,29 +6,33 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import me.leonunes.common.SquareCoordinate
+import me.leonunes.common.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class GameUpdate
 
+typealias GameId = Id<Game, Int>
 interface Game {
-    val id: Int
-    suspend fun joinGame() : Id<Player>
+    val id: GameId
+    suspend fun joinGame() : PlayerId
     fun getPlayers() : List<Player>
     fun getPieces() : List<Piece>
     suspend fun processAction(action: GameAction)
     fun createUpdatesChannel() : ReceiveChannel<GameUpdate>
 }
 
-class GameImp private constructor(override val id: Int) : Game {
+class GameImp private constructor(override val id: GameId) : Game {
     private val players = mutableListOf<Player>()
     private val pieces = mutableListOf<Piece>()
+
+    private var nextPlayerId = 0
+    private var nextPieceId = 0
+
     private val updateChannels: MutableList<SendChannel<GameUpdate>> = mutableListOf()
     private val gameMutex: Mutex = Mutex()
 
-    private var nextPlayerId = 0
-    override suspend fun joinGame(): Id<Player> {
+    override suspend fun joinGame(): PlayerId {
         gameMutex.withLock {
             val player = Player(nextPlayerId.asId())
             nextPlayerId++
@@ -38,11 +42,12 @@ class GameImp private constructor(override val id: Int) : Game {
         }
     }
     override fun getPlayers() : List<Player> = players.toList()
-    fun getPlayerById(id: Id<Player>) : Player? = players.find { it.id.isSame(id) }
+    fun getPlayerById(id: PlayerId) : Player? = players.find { it.id == id }
     override fun getPieces() : List<Piece> = pieces.toList()
 
     fun addPiece(player: Player, position: SquareCoordinate) {
-        pieces.add(Piece(player, position))
+        val id = nextPieceId++
+        pieces.add(Piece(id.asId(), player, position))
     }
 
     override suspend fun processAction(action: GameAction) {
@@ -64,11 +69,11 @@ class GameImp private constructor(override val id: Int) : Game {
 
     companion object Factory {
         private var nextId = AtomicInteger(0)
-        private val games = ConcurrentHashMap<Int, Game>()
-        fun getGameById(id: Int) : Game? = games[id]
+        private val games = ConcurrentHashMap<GameId, Game>()
+        fun getGameById(id: GameId) : Game? = games[id]
 
         fun createGame() : Game {
-            val id = nextId.getAndIncrement()
+            val id: GameId = nextId.getAndIncrement().asId()
             return GameImp(id).also { games[id] = it }
         }
     }
@@ -76,22 +81,8 @@ class GameImp private constructor(override val id: Int) : Game {
 
 typealias GameFactory = GameImp.Factory
 
-data class Piece(val owner: Player, val position: SquareCoordinate)
+typealias PieceId = Id<Piece, Int>
+data class Piece(val id: PieceId, val owner: Player, val position: SquareCoordinate)
 
-data class Player(val id: Id<Player>)
-
-abstract class Id<T> {
-    abstract fun get(): Int
-
-    fun isSame(other: Id<T>) : Boolean {
-        return this.get() == other.get()
-    }
-}
-class IdImp<T>(private val value: Int) : Id<T>() {
-    override fun get(): Int {
-        return value
-    }
-}
-fun <T> Int.asId() : Id<T> {
-    return IdImp(this)
-}
+typealias PlayerId = Id<Player, Int>
+data class Player(val id: PlayerId)

@@ -10,7 +10,7 @@ data class ActionDTO(
     val addPiece: AddPieceDTO? = null,
     val move: MoveActionDTO? = null,
 ) {
-    fun getAction(player: Id<Player>) : GameAction {
+    fun getAction(player: PlayerId) : GameAction {
         val nonNullProperties = this::class.memberProperties
             .mapNotNull { it.getter.call(this) as? ActionDTOBase }
 
@@ -23,15 +23,15 @@ data class ActionDTO(
 }
 
 interface ActionDTOBase {
-    fun toModel(player: Id<Player>) : GameAction
+    fun toModel(player: PlayerId) : GameAction
 }
 
 @Serializable
 data class MoveActionDTO(val pieceId: Int, val position: SquareCoordinate) : ActionDTOBase {
-    override fun toModel(player: Id<Player>) = MoveAction(player, pieceId.asId(), position)
+    override fun toModel(player: PlayerId) = MoveAction(player, pieceId.asId(), position)
 }
 
 @Serializable
 data class AddPieceDTO(val position: SquareCoordinate) : ActionDTOBase {
-    override fun toModel(player: Id<Player>) = AddPieceAction(player, position)
+    override fun toModel(player: PlayerId) = AddPieceAction(player, position)
 }
