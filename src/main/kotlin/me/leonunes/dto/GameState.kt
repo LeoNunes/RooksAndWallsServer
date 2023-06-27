@@ -1,16 +1,14 @@
 package me.leonunes.dto
 
 import kotlinx.serialization.Serializable
-import me.leonunes.common.Id
 import me.leonunes.common.SquareCoordinate
-import me.leonunes.model.Game
-import me.leonunes.model.Piece
-import me.leonunes.model.Player
-import me.leonunes.model.PlayerId
+import me.leonunes.model.*
 
 @Serializable
 data class GameStateDTO(
     val gameId: Int,
+    val gameStage: GameStage,
+    val currentTurn: Int?,
     val playerId: Int,
     val players: List<PlayerDTO>,
     val pieces: List<PieceDTO>,
@@ -29,8 +27,10 @@ fun Piece.toDto() : PieceDTO = PieceDTO(id.get(), owner.id.get(), position)
 fun Game.getStateDto(playerId: PlayerId) : GameStateDTO {
     return GameStateDTO(
         gameId = this.id.get(),
+        gameStage = gameStage,
+        currentTurn = currentTurn?.id?.get(),
         playerId = playerId.get(),
-        pieces = getPieces().map { it.toDto() }.toList(),
-        players = getPlayers().map { it.toDto() }.toList(),
+        players = players.map { it.toDto() }.toList(),
+        pieces = pieces.map { it.toDto() }.toList(),
     )
 }
