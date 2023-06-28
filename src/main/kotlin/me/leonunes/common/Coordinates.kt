@@ -30,7 +30,7 @@ data class EdgeCoordinate(val square1: SquareCoordinate, val square2: SquareCoor
 
     override fun hashCode(): Int {
         listOf(square1, square2).sortedWith { it, other ->
-            if (it.row == other.row ) it.row - other.row else it.column - other.column
+            if (it.row == other.row ) it.column - other.column else it.row - other.row
         }.let {
             return 31 * it[0].hashCode() + it[1].hashCode()
         }

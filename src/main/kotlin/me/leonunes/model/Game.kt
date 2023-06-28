@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import me.leonunes.common.*
+import me.leonunes.common.Piece as PieceType
 
 class GameUpdate
 
@@ -21,6 +22,7 @@ interface Game {
     val currentTurn: Player?
     val players : List<Player>
     val pieces : List<Piece>
+    val walls : List<Wall>
     suspend fun joinGame() : PlayerId
     suspend fun processAction(action: GameAction)
     fun createUpdatesChannel() : ReceiveChannel<GameUpdate>
@@ -29,12 +31,16 @@ interface Game {
 class GameImp private constructor(override val id: GameId) : Game {
     override var gameStage: GameStage = GameStage.WaitingForPlayers
     override var currentTurn: Player? = null
+
     private val _players = mutableListOf<Player>()
     override val players: List<Player>
         get() = _players.toList()
-    private val _pieces = mutableListOf<Piece>()
+
+    private val board = Board(boardRows, boardColumns)
     override val pieces: List<Piece>
-        get() = _pieces.toList()
+        get() = board.pieces.toList()
+    override val walls: List<Wall>
+        get() = board.walls.toList()
 
     private val piecePlacementTurnOrder = alternatingSequencePlayerTurnOrder(numberOfPlayers, piecesPerPlayer * numberOfPlayers)
     private val movesTurnOrder = sequentialPlayerTurnOrder(numberOfPlayers)
@@ -45,7 +51,12 @@ class GameImp private constructor(override val id: GameId) : Game {
     private val updateChannels: MutableList<SendChannel<GameUpdate>> = mutableListOf()
     private val gameMutex: Mutex = Mutex()
 
-    fun getPlayerById(id: PlayerId) : Player? = players.find { it.id == id }
+    private fun getPlayerById(id: PlayerId) : Player = players.find { it.id == id } ?: throw IllegalArgumentException("Player doesn't exist on this game")
+    private fun getPieceById(id: PieceId) : Piece = board.pieces.find { it.id == id } ?: throw IllegalArgumentException("Piece doesn't exist on this game")
+    private fun getPieceByPosition(position: SquareCoordinate) : Piece? = board.pieces.find { it.position == position }
+    private fun getWallByPosition(position: EdgeCoordinate) : Wall? = board.walls.find { it.position == position }
+    private fun assertGameStage(gameStage: GameStage) = if (this.gameStage != gameStage) throw InvalidStage() else Unit
+    private fun assertPlayersTurn(player: Player) = if (currentTurn != player) throw NotPlayersTurnException() else Unit
 
     override suspend fun joinGame(): PlayerId {
         gameMutex.withLock {
@@ -94,22 +105,52 @@ class GameImp private constructor(override val id: GameId) : Game {
         }
     }
 
-    fun addPiece(player: Player, position: SquareCoordinate) {
-        if (player != currentTurn) {
-            throw NotPlayersTurnException()
-        }
-        if (gameStage != GameStage.PiecePlacement) {
-            throw InvalidActionForCurrentStage()
+    fun addPiece(playerId: PlayerId, position: SquareCoordinate) {
+        assertGameStage(GameStage.PiecePlacement)
+
+        val player = getPlayerById(playerId)
+        assertPlayersTurn(player)
+
+        if (getPieceByPosition(position) != null) {
+            throw InvalidAction("Position is already occupied")
         }
 
-        _pieces.add(Piece(nextPieceId++.asId(), player, position))
+        board.pieces.add(Piece(nextPieceId++.asId(), player, position, board))
+        endTurn()
+    }
+
+    fun move(playerId: PlayerId, pieceId: PieceId, pieceDestination: SquareCoordinate, wallPosition: EdgeCoordinate) {
+        assertGameStage(GameStage.Moves)
+
+        val player = getPlayerById(playerId)
+        assertPlayersTurn(player)
+
+        val piece = getPieceById(pieceId)
+        if (piece.owner != player) {
+            throw InvalidAction("Piece not owned by player")
+        }
+
+        if (getWallByPosition(wallPosition) != null) {
+            throw InvalidAction("Wall position is already occupied")
+        }
+
+        if (!piece.movement.canMoveTo(pieceDestination)) {
+            throw InvalidAction("Piece can't move to this position")
+        }
+
+        if (!board.isInsideBoard(wallPosition)) {
+            throw InvalidAction("Wall position is outside the board")
+        }
+
+        piece.position = pieceDestination
+        board.walls.add(Wall(wallPosition))
         endTurn()
     }
 
     override suspend fun processAction(action: GameAction) {
         gameMutex.withLock {
             action.process(this)
-            notifyUpdates() // Can this be outside the lock?
+            notifyUpdates()
         }
     }
 
@@ -146,7 +187,7 @@ class GameImp private constructor(override val id: GameId) : Game {
 enum class GameStage {
     @SerialName("waiting_for_players")
     WaitingForPlayers,
-    @SerialName("piece-placement")
+    @SerialName("piece_placement")
     PiecePlacement,
     @SerialName("moves")
     Moves,
@@ -157,10 +198,20 @@ enum class GameStage {
 typealias GameFactory = GameImp.Factory
 
 typealias PieceId = Id<Piece, Int>
-data class Piece(val id: PieceId, val owner: Player, val position: SquareCoordinate)
+class Piece(val id: PieceId, val owner: Player, override var position: SquareCoordinate, board: Board) : PieceType<SquareCoordinate> {
+    val movement = LinearPieceMovementWithWalls(board, this)
+}
+
+data class Wall(override val position: EdgeCoordinate) : PieceType<EdgeCoordinate>
+
+class Board(override val rows: Int, override val columns: Int) : GridBoardWithWalls {
+    override val pieces = mutableListOf<Piece>()
+    override val walls = mutableListOf<Wall>()
+}
 
 typealias PlayerId = Id<Player, Int>
 data class Player(val id: PlayerId)
 
-class NotPlayersTurnException : Exception()
-class InvalidActionForCurrentStage : Exception()
+class NotPlayersTurnException(message: String? = null, cause: Throwable? = null): Exception(message, cause)
+class InvalidStage(message: String? = null, cause: Throwable? = null): Exception(message, cause)
+class InvalidAction(message: String? = null, cause: Throwable? = null): Exception(message, cause)

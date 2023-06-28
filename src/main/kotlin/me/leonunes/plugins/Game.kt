@@ -1,6 +1,7 @@
 package me.leonunes.plugins
 
 import io.ktor.resources.*
+import io.ktor.serialization.*
 import io.ktor.server.application.*
 import io.ktor.server.resources.*
 import io.ktor.server.response.*
@@ -13,7 +14,6 @@ import kotlinx.serialization.Serializable
 import me.leonunes.common.asId
 import me.leonunes.dto.*
 import me.leonunes.model.*
-import java.nio.charset.Charset
 
 const val apiPathPrefix = "/rw"
 
@@ -40,18 +40,29 @@ fun Application.configureGame() {
             sendSerialized(game.getStateDto(playerId))
 
             launch {
-                for (update in game.createUpdatesChannel()) {
-                    sendSerialized(game.getStateDto(playerId))
+                val channel = game.createUpdatesChannel()
+                try {
+                    for (update in channel) {
+                        sendSerialized(game.getStateDto(playerId))
+                    }
+                }
+                finally {
+                    channel.cancel()
                 }
             }
 
-            for (frame in incoming) {
-                if (frame is Frame.Text) {
-                    val dto = converter?.deserialize(Charset.defaultCharset(), typeInfo<ActionDTO>(), frame) as ActionDTO
-                    println("Received DTO: $dto")
-                    game.processAction(dto.getAction(playerId))
+            launch {
+                while (isActive) {
+                    try {
+                        val dto = receiveDeserialized<ActionDTO>()
+                        game.processAction(dto.getAction(playerId))
+                    }
+                    // TODO: Handle fails properly
+                    catch (e: Exception) {
+                        send("Error while execution action: ${e.javaClass.name} ${e.message}")
+                    }
                 }
-            }
+            }.join()
         }
     }
 }

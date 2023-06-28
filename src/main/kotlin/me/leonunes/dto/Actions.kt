@@ -27,11 +27,11 @@ interface ActionDTOBase {
 }
 
 @Serializable
-data class MoveActionDTO(val pieceId: Int, val position: SquareCoordinate) : ActionDTOBase {
-    override fun toModel(player: PlayerId) = MoveAction(player, pieceId.asId(), position)
+data class AddPieceDTO(val position: SquareCoordinate) : ActionDTOBase {
+    override fun toModel(player: PlayerId) = AddPieceAction(player, position)
 }
 
 @Serializable
-data class AddPieceDTO(val position: SquareCoordinate) : ActionDTOBase {
-    override fun toModel(player: PlayerId) = AddPieceAction(player, position)
+data class MoveActionDTO(val pieceId: Int, val position: SquareCoordinate, val wallPosition: EdgeCoordinate) : ActionDTOBase {
+    override fun toModel(player: PlayerId) = MoveAction(player, pieceId.asId(), position, wallPosition)
 }
