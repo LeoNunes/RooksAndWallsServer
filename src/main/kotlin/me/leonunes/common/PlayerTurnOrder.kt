@@ -12,7 +12,7 @@ fun sequentialPlayerTurnOrder(numberOfPlayers: Int, totalNumberOfTurns: Int? = n
     }
 }.iterator()
 
-fun alternatingSequencePlayerTurnOrder(numberOfPlayers: Int, totalNumberOfTurns: Int?, startPlayer: Int = 0) : Iterator<Int> = sequence {
+fun alternatingSequencePlayerTurnOrder(numberOfPlayers: Int, totalNumberOfTurns: Int? = null, startPlayer: Int = 0) : Iterator<Int> = sequence {
     if (startPlayer >= numberOfPlayers) {
         throw IllegalArgumentException("startPlayer must be lesser than numberOfPlayers")
     }
