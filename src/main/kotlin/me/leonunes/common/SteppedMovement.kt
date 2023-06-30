@@ -12,10 +12,6 @@ open class SteppedMovement<TCoordinate, TBoard : Board<TCoordinate>>(
         configureStepValidation(process)
     }
 
-    override fun canMoveTo(destination: TCoordinate): Boolean {
-        return destination in getPossibleDestinations()
-    }
-
     override fun getPossibleDestinations(): Set<TCoordinate> {
         val destinations = mutableSetOf<TCoordinate>()
         for (step in possibleSteps) {
