@@ -3,9 +3,12 @@ package me.leonunes.common
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
 
+interface Step<TCoordinate> {
+    fun takeStep(fromPosition: TCoordinate) : TCoordinate
+}
+
 @Serializable
 data class SquareCoordinate(val row: Int, val column: Int) {
-
     fun isAdjacentTo(other: SquareCoordinate) : Boolean {
         return (this.row == other.row && abs(this.column - other.column) == 1) ||
                 (this.column == other.column && abs(this.row - other.row) == 1)
@@ -35,4 +38,24 @@ data class EdgeCoordinate(val square1: SquareCoordinate, val square2: SquareCoor
             return 31 * it[0].hashCode() + it[1].hashCode()
         }
     }
+}
+
+@Serializable
+data class SquareCoordinateStep(val rowDelta: Int, val columnDelta: Int) : Step<SquareCoordinate> {
+    override fun takeStep(fromPosition: SquareCoordinate): SquareCoordinate {
+        return SquareCoordinate(fromPosition.row + rowDelta, fromPosition.column + columnDelta)
+    }
+}
+
+fun coord(x: Int, y: Int) = SquareCoordinate(x, y)
+fun coordStep(x: Int, y: Int) = SquareCoordinateStep(x, y)
+
+operator fun SquareCoordinateStep.plus(coordinate: SquareCoordinate) : SquareCoordinate {
+    return takeStep(coordinate)
+}
+operator fun SquareCoordinate.plus(step: SquareCoordinateStep) : SquareCoordinate {
+    return step.takeStep(this)
+}
+operator fun SquareCoordinate.minus(other: SquareCoordinate) : SquareCoordinateStep {
+    return SquareCoordinateStep(row - other.row, column - other.column)
 }

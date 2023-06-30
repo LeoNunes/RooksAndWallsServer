@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import me.leonunes.common.*
-import me.leonunes.common.Piece as PieceType
+import me.leonunes.common.BoardPlaceable
 
 class GameUpdate
 
@@ -198,11 +198,15 @@ enum class GameStage {
 typealias GameFactory = GameImp.Factory
 
 typealias PieceId = Id<Piece, Int>
-class Piece(val id: PieceId, val owner: Player, override var position: SquareCoordinate, board: Board) : PieceType<SquareCoordinate> {
-    val movement = LinearPieceMovementWithWalls(board, this)
+class Piece(val id: PieceId, val owner: Player, override var position: SquareCoordinate, board: Board) : BoardPlaceable<SquareCoordinate> {
+    val movement = SteppedMovement(this, board, linearMovementDirections) {
+        validateInsideBoard()
+        validateBlockedByPieces()
+        validateBlockedByWalls()
+    }
 }
 
-data class Wall(override val position: EdgeCoordinate) : PieceType<EdgeCoordinate>
+data class Wall(override val position: EdgeCoordinate) : BoardPlaceable<EdgeCoordinate>
 
 class Board(override val rows: Int, override val columns: Int) : GridBoardWithWalls {
     override val pieces = mutableListOf<Piece>()

@@ -19,6 +19,12 @@ fun main() {
 }
 
 fun Application.module() {
+    installPlugins()
+
+    configureGame()
+}
+
+fun Application.installPlugins() {
     install(ContentNegotiation) {
         json()
     }
@@ -31,6 +37,4 @@ fun Application.module() {
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
     }
     install(IgnoreTrailingSlash)
-
-    configureGame()
 }
