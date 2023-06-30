@@ -11,9 +11,11 @@ import kotlinx.serialization.Serializable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import me.leonunes.common.*
-import me.leonunes.common.BoardPlaceable
 
 class GameUpdate
+
+typealias PlayerId = Id<Player, Int>
+data class Player(val id: PlayerId)
 
 typealias GameId = Id<Game, Int>
 interface Game {
@@ -55,7 +57,7 @@ class GameImp private constructor(override val id: GameId) : Game {
     private fun getPieceById(id: PieceId) : Piece = board.pieces.find { it.id == id } ?: throw IllegalArgumentException("Piece doesn't exist on this game")
     private fun getPieceByPosition(position: SquareCoordinate) : Piece? = board.pieces.find { it.position == position }
     private fun getWallByPosition(position: EdgeCoordinate) : Wall? = board.walls.find { it.position == position }
-    private fun assertGameStage(gameStage: GameStage) = if (this.gameStage != gameStage) throw InvalidStage() else Unit
+    private fun assertGameStage(gameStage: GameStage) = if (this.gameStage != gameStage) throw InvalidStageException() else Unit
     private fun assertPlayersTurn(player: Player) = if (currentTurn != player) throw NotPlayersTurnException() else Unit
 
     override suspend fun joinGame(): PlayerId {
@@ -112,7 +114,7 @@ class GameImp private constructor(override val id: GameId) : Game {
         assertPlayersTurn(player)
 
         if (getPieceByPosition(position) != null) {
-            throw InvalidAction("Position is already occupied")
+            throw InvalidActionException("Position is already occupied")
         }
 
         board.pieces.add(Piece(nextPieceId++.asId(), player, position, board))
@@ -127,19 +129,19 @@ class GameImp private constructor(override val id: GameId) : Game {
 
         val piece = getPieceById(pieceId)
         if (piece.owner != player) {
-            throw InvalidAction("Piece not owned by player")
+            throw InvalidActionException("Piece not owned by player")
         }
 
         if (getWallByPosition(wallPosition) != null) {
-            throw InvalidAction("Wall position is already occupied")
+            throw InvalidActionException("Wall position is already occupied")
         }
 
         if (!piece.movement.canMoveTo(pieceDestination)) {
-            throw InvalidAction("Piece can't move to this position")
+            throw InvalidActionException("Piece can't move to this position")
         }
 
         if (!board.isInsideBoard(wallPosition)) {
-            throw InvalidAction("Wall position is outside the board")
+            throw InvalidActionException("Wall position is outside the board")
         }
 
         piece.position = pieceDestination
@@ -196,26 +198,3 @@ enum class GameStage {
 }
 
 typealias GameFactory = GameImp.Factory
-
-typealias PieceId = Id<Piece, Int>
-class Piece(val id: PieceId, val owner: Player, override var position: SquareCoordinate, board: Board) : BoardPlaceable<SquareCoordinate> {
-    val movement = SteppedMovement(this, board, linearMovementDirections) {
-        validateInsideBoard()
-        validateBlockedByPieces()
-        validateBlockedByWalls()
-    }
-}
-
-data class Wall(override val position: EdgeCoordinate) : BoardPlaceable<EdgeCoordinate>
-
-class Board(override val rows: Int, override val columns: Int) : GridBoardWithWalls {
-    override val pieces = mutableListOf<Piece>()
-    override val walls = mutableListOf<Wall>()
-}
-
-typealias PlayerId = Id<Player, Int>
-data class Player(val id: PlayerId)
-
-class NotPlayersTurnException(message: String? = null, cause: Throwable? = null): Exception(message, cause)
-class InvalidStage(message: String? = null, cause: Throwable? = null): Exception(message, cause)
-class InvalidAction(message: String? = null, cause: Throwable? = null): Exception(message, cause)
