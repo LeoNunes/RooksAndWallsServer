@@ -17,4 +17,5 @@ data class Wall(override val position: EdgeCoordinate) : BoardPlaceable<EdgeCoor
 class Board(override val rows: Int, override val columns: Int) : GridBoardWithWalls {
     override val pieces = mutableListOf<Piece>()
     override val walls = mutableListOf<Wall>()
+    val deadPieces = mutableListOf<Piece>()
 }

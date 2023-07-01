@@ -14,6 +14,7 @@ data class GameStateDTO(
     val players: List<PlayerDTO>,
     val pieces: List<PieceDTO>,
     val walls: List<WallDTO>,
+    val deadPieces: List<PieceDTO>
 )
 
 @Serializable
@@ -34,8 +35,9 @@ fun Game.getStateDto(playerId: PlayerId) : GameStateDTO {
         gameStage = gameStage,
         currentTurn = currentTurn?.id?.get(),
         playerId = playerId.get(),
-        players = players.map { it.toDto() }.toList(),
-        pieces = pieces.map { it.toDto() }.toList(),
-        walls = walls.map { it.toDto() }.toList(),
+        players = players.map { it.toDto() },
+        pieces = pieces.map { it.toDto() },
+        walls = walls.map { it.toDto() },
+        deadPieces = deadPieces.map { it.toDto() },
     )
 }

@@ -24,6 +24,7 @@ interface Game {
     val currentTurn: Player?
     val players : List<Player>
     val pieces : List<Piece>
+    val deadPieces: List<Piece>
     val walls : List<Wall>
     suspend fun joinGame() : PlayerId
     suspend fun processAction(action: GameAction)
@@ -43,6 +44,8 @@ class GameImp private constructor(override val id: GameId) : Game {
         get() = board.pieces.toList()
     override val walls: List<Wall>
         get() = board.walls.toList()
+    override val deadPieces: List<Piece>
+        get() = board.deadPieces.toList()
 
     private val piecePlacementTurnOrder = alternatingSequencePlayerTurnOrder(numberOfPlayers, piecesPerPlayer * numberOfPlayers)
     private val movesTurnOrder = sequentialPlayerTurnOrder(numberOfPlayers)
@@ -54,7 +57,7 @@ class GameImp private constructor(override val id: GameId) : Game {
     private val gameMutex: Mutex = Mutex()
 
     private fun getPlayerById(id: PlayerId) : Player = players.find { it.id == id } ?: throw IllegalArgumentException("Player doesn't exist on this game")
-    private fun getPieceById(id: PieceId) : Piece = board.pieces.find { it.id == id } ?: throw IllegalArgumentException("Piece doesn't exist on this game")
+    private fun getPieceById(id: PieceId) : Piece = board.pieces.find { it.id == id } ?: throw IllegalArgumentException("Piece is dead or doesn't exist on this game")
     private fun getPieceByPosition(position: SquareCoordinate) : Piece? = board.pieces.find { it.position == position }
     private fun getWallByPosition(position: EdgeCoordinate) : Wall? = board.walls.find { it.position == position }
     private fun assertGameStage(gameStage: GameStage) = if (this.gameStage != gameStage) throw InvalidStageException() else Unit
@@ -96,9 +99,31 @@ class GameImp private constructor(override val id: GameId) : Game {
         currentTurn = players[turnOrder.next()]
     }
 
+    private fun checkDeadPieces() {
+        val deadSquares = board.sliceIntoRegions().filter { it.size <= 8 }.reduce { acc, curr -> acc.union(curr) }
+
+        for (piece in board.pieces.toList()) {
+            if (piece.position in deadSquares) {
+                board.pieces.remove(piece)
+                board.deadPieces.add(piece)
+            }
+        }
+    }
+
+    private fun checkGameIsOver() {
+        if (board.pieces.size == 0) {
+            // Draw
+            completeGame()
+        }
+        if (board.pieces.all { it.owner == board.pieces[0].owner }) {
+            // Win
+            completeGame()
+        }
+    }
+
     private fun endTurn() {
-        // Check if a Piece died and update accordingly
-        // Check if game is over
+        checkDeadPieces()
+        checkGameIsOver()
 
         if (gameStage == GameStage.PiecePlacement && !piecePlacementTurnOrder.hasNext()) {
             startMovesStage()
