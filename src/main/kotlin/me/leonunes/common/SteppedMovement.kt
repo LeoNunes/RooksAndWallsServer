@@ -4,11 +4,11 @@ open class SteppedMovement<TCoordinate, TBoard : Board<TCoordinate>>(
     private val piece: BoardPlaceable<TCoordinate>,
     private val board: TBoard,
     private val possibleSteps: Set<Step<TCoordinate>>,
-    configureStepValidation: StepValidationProcess<TCoordinate, TBoard>.() -> Unit) : PieceMovement<TCoordinate> {
+    configureStepValidation: StepValidationScope<TCoordinate, TBoard>.() -> Unit) : PieceMovement<TCoordinate> {
 
     private val validator = StepValidator<TCoordinate, TBoard>()
     init {
-        val process = StepValidationProcess(validator)
+        val process = StepValidationScope(validator)
         configureStepValidation(process)
     }
 
@@ -36,7 +36,7 @@ open class SteppedMovement<TCoordinate, TBoard : Board<TCoordinate>>(
     }
 }
 
-class StepValidationProcess<TCoordinate, TBoard : Board<TCoordinate>>(private val validator: StepValidator<TCoordinate, TBoard>) {
+class StepValidationScope<TCoordinate, TBoard : Board<TCoordinate>>(private val validator: StepValidator<TCoordinate, TBoard>) {
     fun validate(condition: StepValidationParameters<TCoordinate, TBoard>.() -> StepValidationResult) {
         validator.addCondition(condition)
     }
@@ -97,19 +97,19 @@ enum class StepValidationResult(val valid: Boolean, val terminal: Boolean) {
 val linearMovementDirections = setOf(coordStep(0, 1), coordStep(0, -1), coordStep(1, 0), coordStep(-1, 0))
 val diagonalMovementDirections = setOf(coordStep(1, 1), coordStep(1, -1), coordStep(-1, 1), coordStep(-1, -1))
 
-fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationProcess<TCoordinate, TBoard>.validateMaxNumberOfSteps(max: Int) {
+fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationScope<TCoordinate, TBoard>.validateMaxNumberOfSteps(max: Int) {
     validate {
         if (stepIndex < max) StepValidationResult.Valid else StepValidationResult.InvalidTerminal
     }
 }
 
-fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationProcess<TCoordinate, TBoard>.validateInsideBoard() {
+fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationScope<TCoordinate, TBoard>.validateInsideBoard() {
     validate {
         if (board.isInsideBoard(nextPosition)) StepValidationResult.Valid else StepValidationResult.InvalidTerminal
     }
 }
 
-fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationProcess<TCoordinate, TBoard>.validateBlockedByPieces() {
+fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationScope<TCoordinate, TBoard>.validateBlockedByPieces() {
     validate {
         if (board.pieces.find { it.position == nextPosition } != null)
             return@validate StepValidationResult.InvalidTerminal
@@ -117,7 +117,7 @@ fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationProcess<TCoordinate
     }
 }
 
-fun <TBoard : GridBoardWithWalls> StepValidationProcess<SquareCoordinate, TBoard>.validateBlockedByWalls() {
+fun <TBoard : GridBoardWithWalls> StepValidationScope<SquareCoordinate, TBoard>.validateBlockedByWalls() {
     validate {
         val edgePosition = EdgeCoordinate(currentPosition, nextPosition)
         if (board.walls.find { it.position == edgePosition } != null)

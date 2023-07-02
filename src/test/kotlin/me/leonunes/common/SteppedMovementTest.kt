@@ -91,7 +91,7 @@ class SteppedMovementTest {
         pieces: List<SquareCoordinate> = emptyList(),
         walls: List<EdgeCoordinate> = emptyList(),
         directions: Set<SquareCoordinateStep> = linearMovementDirections,
-        configureStepValidation: StepValidationProcess<SquareCoordinate, GridBoardWithWalls>.() -> Unit
+        configureStepValidation: StepValidationScope<SquareCoordinate, GridBoardWithWalls>.() -> Unit
     ) : SteppedMovement<SquareCoordinate, GridBoardWithWalls> {
 
         return SteppedMovement(
