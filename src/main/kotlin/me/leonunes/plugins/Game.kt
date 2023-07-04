@@ -1,19 +1,20 @@
 package me.leonunes.plugins
 
 import io.ktor.resources.*
-import io.ktor.serialization.*
 import io.ktor.server.application.*
 import io.ktor.server.resources.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.*
-import io.ktor.util.reflect.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import me.leonunes.common.asId
-import me.leonunes.dto.*
-import me.leonunes.model.*
+import me.leonunes.dto.ActionDTO
+import me.leonunes.dto.getStateDto
+import me.leonunes.model.GameFactory
+import me.leonunes.model.GameId
 
 const val apiPathPrefix = "/rw"
 
@@ -69,7 +70,7 @@ fun Application.configureGame() {
 
 @Serializable
 @Resource("$apiPathPrefix/game/")
-class CreateGameRequest()
+class CreateGameRequest
 
 @Serializable
 class CreateGameResponse(val gameId: Int)

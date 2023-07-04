@@ -57,7 +57,7 @@ class StepValidator<TCoordinate, TBoard : Board<TCoordinate>> {
             valid = partialResult.valid && valid
             terminal = partialResult.terminal || terminal
 
-            if (!valid && terminal) break;
+            if (!valid && terminal) break
         }
 
         return StepValidationResult.getBy(valid, terminal)

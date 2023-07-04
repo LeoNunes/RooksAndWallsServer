@@ -5,11 +5,11 @@ import me.leonunes.common.SquareCoordinate
 
 sealed interface GameAction {
     val playerId: PlayerId
-    suspend fun process(game: GameImp)
+    fun process(game: GameImp)
 }
 
 data class AddPieceAction(override val playerId: PlayerId, val position: SquareCoordinate) : GameAction {
-    override suspend fun process(game: GameImp) {
+    override fun process(game: GameImp) {
         game.addPiece(playerId, position)
     }
 }
@@ -20,7 +20,7 @@ data class MoveAction(
     val piecePosition: SquareCoordinate,
     val wallPosition: EdgeCoordinate) : GameAction {
 
-    override suspend fun process(game: GameImp) {
+    override fun process(game: GameImp) {
         game.move(playerId, pieceId, piecePosition, wallPosition)
     }
 }

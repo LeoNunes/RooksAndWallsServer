@@ -8,9 +8,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import me.leonunes.common.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import me.leonunes.common.*
 
 class GameUpdate
 
@@ -23,6 +23,7 @@ interface Game {
     val gameStage: GameStage
     val currentTurn: Player?
     val players : List<Player>
+    val remainingPlayers: List<Player>
     val pieces : List<Piece>
     val deadPieces: List<Piece>
     val walls : List<Wall>
@@ -50,6 +51,8 @@ class GameImp private constructor(override val id: GameId) : Game {
     private val piecePlacementTurnOrder = alternatingSequencePlayerTurnOrder(numberOfPlayers, piecesPerPlayer * numberOfPlayers)
     private val movesTurnOrder = sequentialPlayerTurnOrder(numberOfPlayers)
 
+    override var remainingPlayers = listOf<Player>()
+
     private var nextPlayerId = 0
     private var nextPieceId = 0
 
@@ -76,6 +79,7 @@ class GameImp private constructor(override val id: GameId) : Game {
     }
 
     private fun startGame() {
+        remainingPlayers = players.toList()
         startPiecePlacementStage()
     }
 
@@ -96,11 +100,19 @@ class GameImp private constructor(override val id: GameId) : Game {
 
     private fun moveToNextPlayerTurn() {
         val turnOrder = if (gameStage == GameStage.PiecePlacement) piecePlacementTurnOrder else movesTurnOrder
-        currentTurn = players[turnOrder.next()]
+        var nextPlayer = players[turnOrder.next()]
+        while (nextPlayer !in remainingPlayers) {
+            nextPlayer = players[turnOrder.next()]
+        }
+        currentTurn = nextPlayer
     }
 
     private fun checkDeadPieces() {
-        val deadSquares = board.sliceIntoRegions().filter { it.size <= 8 }.reduce { acc, curr -> acc.union(curr) }
+        val deadSquares = board.sliceIntoRegions()
+            .filter { it.size <= 8 }
+            .reduceOrNull { acc, curr -> acc.union(curr) }
+            ?: return
+
 
         for (piece in board.pieces.toList()) {
             if (piece.position in deadSquares) {
@@ -108,6 +120,10 @@ class GameImp private constructor(override val id: GameId) : Game {
                 board.deadPieces.add(piece)
             }
         }
+    }
+
+    private fun updateRemainingPlayers() {
+        remainingPlayers = pieces.map { it.owner }.distinct()
     }
 
     private fun checkGameIsOver() {
@@ -122,12 +138,19 @@ class GameImp private constructor(override val id: GameId) : Game {
     }
 
     private fun endTurn() {
-        checkDeadPieces()
-        checkGameIsOver()
+        if (gameStage == GameStage.Moves) {
+            checkDeadPieces()
+            updateRemainingPlayers()
+            checkGameIsOver()
+        }
+
+        if (gameStage == GameStage.Completed)
+            return
 
         if (gameStage == GameStage.PiecePlacement && !piecePlacementTurnOrder.hasNext()) {
             startMovesStage()
-        } else {
+        }
+        else {
             moveToNextPlayerTurn()
         }
     }
@@ -189,10 +212,13 @@ class GameImp private constructor(override val id: GameId) : Game {
 
     private suspend fun notifyUpdates() {
         updateChannels.forEach { it.send(GameUpdate()) }
+        if (gameStage == GameStage.Completed) {
+            updateChannels.forEach { it.close() }
+        }
     }
 
     private companion object Config {
-        const val numberOfPlayers = 2
+        const val numberOfPlayers = 3
         const val piecesPerPlayer = 3
         const val boardRows = 8
         const val boardColumns = 8

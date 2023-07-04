@@ -5,7 +5,7 @@ fun sequentialPlayerTurnOrder(numberOfPlayers: Int, totalNumberOfTurns: Int? = n
         throw IllegalArgumentException("startPlayer must be lesser than numberOfPlayers")
     }
 
-    var currentTurn = 0;
+    var currentTurn = 0
     while (totalNumberOfTurns == null || currentTurn < totalNumberOfTurns) {
         yield((currentTurn + startPlayer) % numberOfPlayers)
         currentTurn++

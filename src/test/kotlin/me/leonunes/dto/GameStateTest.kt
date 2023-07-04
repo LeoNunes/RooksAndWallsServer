@@ -1,5 +1,6 @@
 package me.leonunes.dto
 
+import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.junit4.MockKRule
 import io.mockk.mockk
@@ -69,5 +70,10 @@ class GameStateTest {
             deadPieces.map { PieceDTO(it.id.get(), it.owner.id.get(), it.position) }.toSet(),
             dto.deadPieces.toSet()
         )
+
+        // This is needed, even though no statics/objects/constructor are being mocked, because the mocks are "leaking"
+        // to other tests and confirmVerified() fails, as the mocks in this test where not verified
+        // https://github.com/mockk/mockk/issues/821
+        clearAllMocks()
     }
 }
