@@ -1,19 +1,28 @@
 package me.leonunes.common
 
-open class SteppedMovement<TCoordinate, TBoard : Board<TCoordinate>>(
-    private val piece: BoardPlaceable<TCoordinate>,
-    private val board: TBoard,
-    private val possibleSteps: Set<Step<TCoordinate>>,
-    configureStepValidation: StepValidationScope<TCoordinate, TBoard>.() -> Unit) : PieceMovement<TCoordinate> {
+val linearMovementDirections = setOf(coordStep(0, 1), coordStep(0, -1), coordStep(1, 0), coordStep(-1, 0))
+val diagonalMovementDirections = setOf(coordStep(1, 1), coordStep(1, -1), coordStep(-1, 1), coordStep(-1, -1))
 
-    private val validator = StepValidator<TCoordinate, TBoard>()
-    init {
-        val process = StepValidationScope(validator)
-        configureStepValidation(process)
+open class SteppedMovement<TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard : Board<*>>(
+    val piece: TPlaceable,
+    val board: TBoard,
+    val possibleSteps: Set<Step<TCoord>>,
+) : PieceMovement<TCoord> {
+
+    private val _validations = mutableListOf<StepValidation<TCoord, TPlaceable, TBoard>>()
+    val validations
+        get() = _validations.toList()
+
+    // TODO: Add conditions to addStepValidation. If the condition is met the validation is executed
+    // A condition can have a type (TCondition.() -> Boolean) and getPossibleDestinations executes it before adding the validation
+    // getPossibleDestinations and canMoveTo would need to have a TCondition parameter
+    // This probably needs to be done in the board interface, leaving both Board<TCoord> and Boar<TCoord, TCondition>
+    fun addStepValidation(validation: StepValidation<TCoord, TPlaceable, TBoard>) {
+        _validations.add(validation)
     }
 
-    override fun getPossibleDestinations(): Set<TCoordinate> {
-        val destinations = mutableSetOf<TCoordinate>()
+    override fun getPossibleDestinations(): Set<TCoord> {
+        val destinations = mutableSetOf<TCoord>()
         for (step in possibleSteps) {
             val initialPosition = piece.position
             var currentPosition = initialPosition
@@ -21,8 +30,8 @@ open class SteppedMovement<TCoordinate, TBoard : Board<TCoordinate>>(
 
             while (true) {
                 val nextPosition = step.takeStep(currentPosition)
-                val params = StepValidationParameters(index, initialPosition, currentPosition, nextPosition, board)
-                val result = validator.validate(params)
+                val params = StepValidationParameters(index, initialPosition, currentPosition, nextPosition, piece, board)
+                val result = validateStep(params)
 
                 if (result.valid) destinations.add(nextPosition)
                 if (result.terminal) break
@@ -34,26 +43,12 @@ open class SteppedMovement<TCoordinate, TBoard : Board<TCoordinate>>(
 
         return destinations
     }
-}
 
-class StepValidationScope<TCoordinate, TBoard : Board<TCoordinate>>(private val validator: StepValidator<TCoordinate, TBoard>) {
-    fun validate(condition: StepValidationParameters<TCoordinate, TBoard>.() -> StepValidationResult) {
-        validator.addCondition(condition)
-    }
-}
-
-class StepValidator<TCoordinate, TBoard : Board<TCoordinate>> {
-    private val conditions = mutableListOf<(StepValidationParameters<TCoordinate, TBoard>) -> StepValidationResult>()
-
-    fun addCondition(condition: (StepValidationParameters<TCoordinate, TBoard>) -> StepValidationResult) {
-        conditions.add(condition)
-    }
-
-    fun validate(parameters: StepValidationParameters<TCoordinate, TBoard>) : StepValidationResult {
+    private fun validateStep(parameters: StepValidationParameters<TCoord, TPlaceable, TBoard>) : StepValidationResult {
         var valid = true
         var terminal = false
-        for (condition in conditions) {
-            val partialResult = condition(parameters)
+        for (validation in validations) {
+            val partialResult = validation.validate(parameters)
             valid = partialResult.valid && valid
             terminal = partialResult.terminal || terminal
 
@@ -64,12 +59,17 @@ class StepValidator<TCoordinate, TBoard : Board<TCoordinate>> {
     }
 }
 
-class StepValidationParameters<TCoordinate, TBoard : Board<TCoordinate>>(
+fun interface StepValidation<TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard : Board<*>> {
+    fun validate(parameters: StepValidationParameters<TCoord, TPlaceable, TBoard>) : StepValidationResult
+}
+
+class StepValidationParameters<TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard : Board<*>>(
     val stepIndex: Int,
-    val initialPosition: TCoordinate,
-    val currentPosition: TCoordinate,
-    val nextPosition: TCoordinate,
-    val board: TBoard
+    val initialPosition: TCoord,
+    val currentPosition: TCoord,
+    val nextPosition: TCoord,
+    val piece: TPlaceable,
+    val board: TBoard,
 )
 
 enum class StepValidationResult(val valid: Boolean, val terminal: Boolean) {
@@ -94,34 +94,63 @@ enum class StepValidationResult(val valid: Boolean, val terminal: Boolean) {
     }
 }
 
-val linearMovementDirections = setOf(coordStep(0, 1), coordStep(0, -1), coordStep(1, 0), coordStep(-1, 0))
-val diagonalMovementDirections = setOf(coordStep(1, 1), coordStep(1, -1), coordStep(-1, 1), coordStep(-1, -1))
 
-fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationScope<TCoordinate, TBoard>.validateMaxNumberOfSteps(max: Int) {
-    validate {
-        if (stepIndex < max) StepValidationResult.Valid else StepValidationResult.InvalidTerminal
+class MaxNumberOfStepsStepValidation<TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard : Board<*>>(
+    val max: Int
+) : StepValidation<TCoord, TPlaceable, TBoard> {
+    override fun validate(parameters: StepValidationParameters<TCoord, TPlaceable, TBoard>): StepValidationResult {
+        with(parameters) {
+            return if (stepIndex < max) StepValidationResult.Valid else StepValidationResult.InvalidTerminal
+        }
     }
 }
-
-fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationScope<TCoordinate, TBoard>.validateInsideBoard() {
-    validate {
-        if (board.isInsideBoard(nextPosition)) StepValidationResult.Valid else StepValidationResult.InvalidTerminal
-    }
+fun <TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard : Board<TCoord>> SteppedMovement<TCoord, TPlaceable, TBoard>.validateMaxNumberOfSteps(max: Int) {
+    addStepValidation(MaxNumberOfStepsStepValidation(max))
 }
 
-fun <TCoordinate, TBoard : Board<TCoordinate>> StepValidationScope<TCoordinate, TBoard>.validateBlockedByPieces() {
-    validate {
-        if (board.pieces.find { it.position == nextPosition } != null)
-            return@validate StepValidationResult.InvalidTerminal
-        return@validate StepValidationResult.Valid
+class InsideBoardStepValidation<TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard : Board<TCoord>> : StepValidation<TCoord, TPlaceable, TBoard> {
+    override fun validate(parameters: StepValidationParameters<TCoord, TPlaceable, TBoard>): StepValidationResult {
+        with(parameters) {
+            return if (board.isInsideBoard(nextPosition)) StepValidationResult.Valid else StepValidationResult.InvalidTerminal
+        }
     }
 }
+fun <TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard : Board<TCoord>> SteppedMovement<TCoord, TPlaceable, TBoard>.validateInsideBoard() {
+    addStepValidation(InsideBoardStepValidation())
+}
 
-fun <TBoard : GridBoardWithWalls> StepValidationScope<SquareCoordinate, TBoard>.validateBlockedByWalls() {
-    validate {
-        val edgePosition = EdgeCoordinate(currentPosition, nextPosition)
-        if (board.walls.find { it.position == edgePosition } != null)
-            return@validate StepValidationResult.InvalidTerminal
-        return@validate StepValidationResult.Valid
+class BlockedByPiecesStepValidation<TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard>(
+    private val considerPiece: (TPlaceable, StepValidationParameters<TCoord, TPlaceable, TBoard>) -> Boolean = { _, _ -> true }
+) : StepValidation<TCoord, TPlaceable, TBoard> where TBoard: Board<*>, TBoard : WithPieces<TPlaceable>{
+    override fun validate(parameters: StepValidationParameters<TCoord, TPlaceable, TBoard>): StepValidationResult {
+        with(parameters) {
+            val piece = board.pieces.find { it.position == nextPosition }
+            if (piece != null && considerPiece(piece, this))
+                return StepValidationResult.InvalidTerminal
+            return StepValidationResult.Valid
+        }
     }
+}
+fun <TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard> SteppedMovement<TCoord, TPlaceable, TBoard>.validateBlockedByPieces(
+    considerPiece: (TPlaceable, StepValidationParameters<TCoord, TPlaceable, TBoard>) -> Boolean = { _, _ -> true }
+)  where TBoard: Board<*>, TBoard : WithPieces<TPlaceable> {
+
+    addStepValidation(BlockedByPiecesStepValidation(considerPiece))
+}
+
+class BlockedByWallsStepValidation<TPlaceable: BoardPlaceable<SquareCoordinate>, TWall: BoardPlaceable<EdgeCoordinate>, TBoard>
+    : StepValidation<SquareCoordinate, TPlaceable, TBoard> where TBoard : WithWalls<TWall>, TBoard: Board<*> {
+    override fun validate(parameters: StepValidationParameters<SquareCoordinate, TPlaceable, TBoard>): StepValidationResult {
+        with(parameters) {
+            val edgePosition = EdgeCoordinate(currentPosition, nextPosition)
+            if (board.walls.find { it.position == edgePosition } != null)
+                return StepValidationResult.InvalidTerminal
+            return StepValidationResult.Valid
+        }
+    }
+}
+fun <TPlaceable: BoardPlaceable<SquareCoordinate>, TWall: BoardPlaceable<EdgeCoordinate>, TBoard>
+    SteppedMovement<SquareCoordinate, TPlaceable, TBoard>.validateBlockedByWalls() where TBoard : WithWalls<TWall>, TBoard : Board<*> {
+
+    addStepValidation(BlockedByWallsStepValidation())
 }

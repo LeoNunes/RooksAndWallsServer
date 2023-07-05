@@ -5,7 +5,7 @@ import me.leonunes.common.*
 typealias PieceId = Id<Piece, Int>
 class Piece(val id: PieceId, val owner: Player, override var position: SquareCoordinate, board: Board) :
     BoardPlaceable<SquareCoordinate> {
-    val movement = SteppedMovement(this, board, linearMovementDirections) {
+    val movement = SteppedMovement(this, board, linearMovementDirections).apply {
         validateInsideBoard()
         validateBlockedByPieces()
         validateBlockedByWalls()
@@ -14,7 +14,7 @@ class Piece(val id: PieceId, val owner: Player, override var position: SquareCoo
 
 data class Wall(override val position: EdgeCoordinate) : BoardPlaceable<EdgeCoordinate>
 
-class Board(override val rows: Int, override val columns: Int) : GridBoardWithWalls {
+class Board(override val rows: Int, override val columns: Int) : GridBoard, WithPieces<Piece>, WithWalls<Wall> {
     override val pieces = mutableListOf<Piece>()
     override val walls = mutableListOf<Wall>()
     val deadPieces = mutableListOf<Piece>()

@@ -1,6 +1,9 @@
 package me.leonunes.common
 
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class BoardTest {
     @Test
@@ -8,7 +11,6 @@ class BoardTest {
         val board = object : GridBoard {
             override val rows = 8
             override val columns = 8
-            override val pieces = emptyList<BoardPlaceable<SquareCoordinate>>()
         }
 
         assertTrue(board.isInsideBoard(SquareCoordinate(3, 6)))
@@ -19,12 +21,10 @@ class BoardTest {
     }
 
     @Test
-    fun `GridBoardWithWalls isInsideBoard works correctly`() {
-        val board = object : GridBoardWithWalls {
+    fun `GridBoard isInsideBoard for EdgeCoordinate works correctly`() {
+        val board = object : GridBoard {
             override val rows = 8
             override val columns = 8
-            override val pieces = emptyList<BoardPlaceable<SquareCoordinate>>()
-            override val walls = emptyList<BoardPlaceable<EdgeCoordinate>>()
         }
 
         assertTrue(board.isInsideBoard(EdgeCoordinate(SquareCoordinate(5, 5), SquareCoordinate(5, 6))))
@@ -39,7 +39,6 @@ class BoardTest {
         val board = object : GridBoard {
             override val rows = 5
             override val columns = 4
-            override val pieces = emptyList<BoardPlaceable<SquareCoordinate>>()
         }
 
         assertEquals(
@@ -55,10 +54,9 @@ class BoardTest {
 
     @Test
     fun `GridBoardWithWalls sliceIntoRegions works properly`() {
-        val board = object : GridBoardWithWalls {
+        val board = object : GridBoard, WithWalls<BoardPlaceable<EdgeCoordinate>> {
             override val rows = 4
             override val columns = 4
-            override val pieces = emptyList<BoardPlaceable<SquareCoordinate>>()
             override val walls = listOf(
                 EdgeCoordinate(coord(0, 0), coord(0, 1)),
                 EdgeCoordinate(coord(1, 0), coord(1, 1)),

@@ -1,20 +1,28 @@
 package me.leonunes.common
 
-import java.util.Stack
+import java.util.*
 
-interface BoardPlaceable<TCoordinate> {
-    val position: TCoordinate
+interface Board<TCoord> {
+    fun isInsideBoard(position: TCoord) : Boolean
+    fun allPositions() : Set<TCoord>
 }
 
-interface Board<TCoordinate> {
-    val pieces: List<BoardPlaceable<TCoordinate>>
-    fun isInsideBoard(position: TCoordinate) : Boolean
-    fun allPositions() : Set<TCoordinate>
+interface BoardPlaceable<TCoord> {
+    val position: TCoord
+}
+
+interface WithPieces<out TPiece : BoardPlaceable<*>> {
+    val pieces: List<TPiece>
+}
+
+interface WithWalls<out TWall : BoardPlaceable<*>> {
+    val walls: List<TWall>
 }
 
 interface GridBoard : Board<SquareCoordinate> {
     val rows: Int
     val columns: Int
+
     override fun isInsideBoard(position: SquareCoordinate) : Boolean {
         return position.row in 0 until rows && position.column in 0 until columns
     }
@@ -30,15 +38,13 @@ interface GridBoard : Board<SquareCoordinate> {
     }
 }
 
-interface GridBoardWithWalls : GridBoard {
-    val walls: List<BoardPlaceable<EdgeCoordinate>>
-
-    fun isInsideBoard(position: EdgeCoordinate) : Boolean {
-        return isInsideBoard(position.square1) && isInsideBoard(position.square2)
-    }
+fun Board<SquareCoordinate>.isInsideBoard(position: EdgeCoordinate) : Boolean {
+    return isInsideBoard(position.square1) && isInsideBoard(position.square2)
 }
 
-fun GridBoardWithWalls.sliceIntoRegions() : Set<Set<SquareCoordinate>>{
+fun <TBoard> TBoard.sliceIntoRegions() : Set<Set<SquareCoordinate>>
+    where TBoard : GridBoard, TBoard : WithWalls<BoardPlaceable<EdgeCoordinate>> {
+
     fun connectedTo(square: SquareCoordinate) : List<SquareCoordinate> {
         return listOf(coordStep(0, 1), coordStep(0, -1), coordStep(1, 0), coordStep(-1, 0))
             .map { it.takeStep(square) }

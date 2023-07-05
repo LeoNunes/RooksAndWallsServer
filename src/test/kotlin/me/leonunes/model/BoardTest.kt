@@ -1,10 +1,13 @@
 package me.leonunes.model
 
-import io.mockk.*
 import io.mockk.junit4.MockKRule
+import io.mockk.mockk
+import io.mockk.unmockkAll
 import me.leonunes.common.*
 import org.junit.Rule
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class BoardTest {
     @get:Rule
@@ -12,21 +15,12 @@ class BoardTest {
 
     @Test
     fun `Piece movement is defined correctly`() {
-        mockkConstructor(StepValidationScope::class)
-        mockkStatic(StepValidationScope<SquareCoordinate, Board>::validateBlockedByPieces)
-        mockkStatic(StepValidationScope<SquareCoordinate, Board>::validateBlockedByWalls)
-        mockkStatic(StepValidationScope<SquareCoordinate, Board>::validateInsideBoard)
+        val piece = Piece(3.asId(), mockk<Player>(), coord(2, 5), mockk<Board>())
 
-        every { anyConstructed<StepValidationScope<SquareCoordinate, Board>>().validate(any()) } just Runs
-        every { any<StepValidationScope<SquareCoordinate, Board>>().validateBlockedByPieces() } answers { callOriginal() }
-        every { any<StepValidationScope<SquareCoordinate, Board>>().validateBlockedByWalls() } answers { callOriginal() }
-        every { any<StepValidationScope<SquareCoordinate, Board>>().validateInsideBoard() } answers { callOriginal() }
-
-        Piece(3.asId(), mockk<Player>(), coord(2, 5), mockk<Board>())
-
-        verify(exactly = 1) { any<StepValidationScope<SquareCoordinate, Board>>().validateBlockedByPieces() }
-        verify(exactly = 1) { any<StepValidationScope<SquareCoordinate, Board>>().validateBlockedByWalls() }
-        verify(exactly = 1) { any<StepValidationScope<SquareCoordinate, Board>>().validateInsideBoard() }
+        assertEquals(3, piece.movement.validations.size)
+        assertNotNull(piece.movement.validations.find { it is InsideBoardStepValidation })
+        assertNotNull(piece.movement.validations.find { it is BlockedByPiecesStepValidation })
+        assertNotNull(piece.movement.validations.find { it is BlockedByWallsStepValidation<*, *, *> })
 
         unmockkAll()
     }
