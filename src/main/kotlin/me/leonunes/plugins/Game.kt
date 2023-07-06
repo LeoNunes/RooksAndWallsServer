@@ -2,6 +2,7 @@ package me.leonunes.plugins
 
 import io.ktor.resources.*
 import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.server.resources.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.routing
@@ -13,6 +14,7 @@ import kotlinx.serialization.Serializable
 import me.leonunes.common.asId
 import me.leonunes.dto.ActionDTO
 import me.leonunes.dto.getStateDto
+import me.leonunes.model.GameConfig
 import me.leonunes.model.GameFactory
 import me.leonunes.model.GameId
 
@@ -20,8 +22,12 @@ const val apiPathPrefix = "/rw"
 
 fun Application.configureGame() {
     routing {
-        post<CreateGameRequest> { request ->
-            val game = GameFactory.createGame()
+        post<CreateGameRequest> {
+            val body = runCatching { call.receive<CreateGameRequestBody>() }.getOrNull()
+
+            val game = if (body == null) GameFactory.createGame() else
+                GameFactory.createGame(GameConfig(body.numberOfPlayers, body.piecesPerPlayer, body.boardRows, body.boardColumns))
+
             call.respond(CreateGameResponse(game.id.get()))
         }
 
@@ -71,6 +77,12 @@ fun Application.configureGame() {
 @Serializable
 @Resource("$apiPathPrefix/game/")
 class CreateGameRequest
-
+@Serializable
+class CreateGameRequestBody(
+    val numberOfPlayers: Int? = null,
+    val piecesPerPlayer: Int? = null,
+    val boardRows: Int? = null,
+    val boardColumns: Int? = null,
+    /*val users: List<String>? = null*/) // this list will be for when there is authentication and a game is created for specific users
 @Serializable
 class CreateGameResponse(val gameId: Int)

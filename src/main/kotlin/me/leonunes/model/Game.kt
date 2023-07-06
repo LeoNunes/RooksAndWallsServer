@@ -20,6 +20,7 @@ data class Player(val id: PlayerId)
 typealias GameId = Id<Game, Int>
 interface Game {
     val id: GameId
+    val config: GameConfig
     val gameStage: GameStage
     val currentTurn: Player?
     val players : List<Player>
@@ -32,7 +33,7 @@ interface Game {
     fun createUpdatesChannel() : ReceiveChannel<GameUpdate>
 }
 
-class GameImp private constructor(override val id: GameId) : Game {
+class GameImp private constructor(override val id: GameId, override val config: GameConfig) : Game {
     override var gameStage: GameStage = GameStage.WaitingForPlayers
     override var currentTurn: Player? = null
 
@@ -40,7 +41,7 @@ class GameImp private constructor(override val id: GameId) : Game {
     override val players: List<Player>
         get() = _players.toList()
 
-    private val board = Board(boardRows, boardColumns)
+    private val board = Board(config.boardRows, config.boardColumns)
     override val pieces: List<Piece>
         get() = board.pieces.toList()
     override val walls: List<Wall>
@@ -48,8 +49,10 @@ class GameImp private constructor(override val id: GameId) : Game {
     override val deadPieces: List<Piece>
         get() = board.deadPieces.toList()
 
-    private val piecePlacementTurnOrder = alternatingSequencePlayerTurnOrder(numberOfPlayers, piecesPerPlayer * numberOfPlayers)
-    private val movesTurnOrder = sequentialPlayerTurnOrder(numberOfPlayers)
+    private val piecePlacementTurnOrder =
+        alternatingSequencePlayerTurnOrder(config.numberOfPlayers, config.piecesPerPlayer * config.numberOfPlayers)
+    private val movesTurnOrder = if (config.piecesPerPlayer % 2 == 1) sequentialPlayerTurnOrder(config.numberOfPlayers)
+        else sequentialPlayerTurnOrder(config.numberOfPlayers, startPlayer = config.numberOfPlayers - 1, reversed = true)
 
     override var remainingPlayers = listOf<Player>()
 
@@ -68,9 +71,13 @@ class GameImp private constructor(override val id: GameId) : Game {
 
     override suspend fun joinGame(): PlayerId {
         gameMutex.withLock {
+            if (players.size == config.numberOfPlayers) {
+                throw GameFullException()
+            }
+
             val player = Player(nextPlayerId++.asId())
             _players.add(player)
-            if (players.size == numberOfPlayers) {
+            if (players.size == config.numberOfPlayers) {
                 startGame()
             }
             notifyUpdates()
@@ -161,6 +168,10 @@ class GameImp private constructor(override val id: GameId) : Game {
         val player = getPlayerById(playerId)
         assertPlayersTurn(player)
 
+        if (!board.isInsideBoard(position)) {
+            throw InvalidActionException("Position is not inside board")
+        }
+
         if (getPieceByPosition(position) != null) {
             throw InvalidActionException("Position is already occupied")
         }
@@ -217,21 +228,18 @@ class GameImp private constructor(override val id: GameId) : Game {
         }
     }
 
-    private companion object Config {
-        const val numberOfPlayers = 3
-        const val piecesPerPlayer = 3
-        const val boardRows = 8
-        const val boardColumns = 8
-    }
-
     object Factory {
         private var nextId = AtomicInteger(0)
         private val games = ConcurrentHashMap<GameId, Game>()
         fun getGameById(id: GameId) : Game? = games[id]
 
-        fun createGame() : Game {
+        fun createGame(config: GameConfig) : Game {
             val id: GameId = nextId.getAndIncrement().asId()
-            return GameImp(id).also { games[id] = it }
+            return GameImp(id, config).also { games[id] = it }
+        }
+
+        fun createGame() : Game {
+            return createGame(GameConfigDefaultValues)
         }
     }
 }

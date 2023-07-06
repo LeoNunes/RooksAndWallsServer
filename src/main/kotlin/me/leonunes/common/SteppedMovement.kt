@@ -16,7 +16,7 @@ open class SteppedMovement<TCoord, TPlaceable : BoardPlaceable<TCoord>, TBoard :
     // TODO: Add conditions to addStepValidation. If the condition is met the validation is executed
     // A condition can have a type (TCondition.() -> Boolean) and getPossibleDestinations executes it before adding the validation
     // getPossibleDestinations and canMoveTo would need to have a TCondition parameter
-    // This probably needs to be done in the board interface, leaving both Board<TCoord> and Boar<TCoord, TCondition>
+    // This probably needs to be done in the PieceMovement interface, leaving both PieceMovement<TCoord> and PieceMovement<TCoord, TCondition>
     fun addStepValidation(validation: StepValidation<TCoord, TPlaceable, TBoard>) {
         _validations.add(validation)
     }

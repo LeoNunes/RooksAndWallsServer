@@ -4,9 +4,10 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.junit4.MockKRule
 import io.mockk.mockk
-import me.leonunes.common.*
+import me.leonunes.common.EdgeCoordinate
+import me.leonunes.common.asId
+import me.leonunes.common.coord
 import me.leonunes.model.*
-import me.leonunes.model.Board
 import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,6 +20,7 @@ class GameStateTest {
     fun `Game getStateDto works properly`() {
         val game = mockk<Game>()
         val board = mockk<Board>()
+        val config = GameConfigDefaultValues
         val player1 = Player(0.asId())
         val player2 = Player(1.asId())
         val players = listOf(player1, player2)
@@ -42,6 +44,7 @@ class GameStateTest {
         )
 
         every { game.id } returns 20.asId()
+        every { game.config } returns config
         every { game.gameStage } returns GameStage.PiecePlacement
         every { game.currentTurn } returns player2
         every { game.players } returns players
@@ -52,7 +55,11 @@ class GameStateTest {
         val dto = game.getStateDto(player1.id)
         assertEquals(player1.id.get(), dto.playerId)
         assertEquals(20, dto.gameId)
-        assertEquals(GameStage.PiecePlacement, dto.gameStage)
+        assert(dto.config.numberOfPlayers == config.numberOfPlayers)
+        assert(dto.config.piecesPerPlayer == config.piecesPerPlayer)
+        assert(dto.config.boardRows == config.boardRows)
+        assert(dto.config.boardColumns == config.boardColumns)
+        assertEquals(GameStage.PiecePlacement, dto.stage)
         assertEquals(player2.id.get(), dto.currentTurn)
         assertEquals(
             players.map { PlayerDTO(it.id.get()) }.toSet(),

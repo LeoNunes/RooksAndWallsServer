@@ -50,6 +50,11 @@ data class SquareCoordinateStep(val rowDelta: Int, val columnDelta: Int) : Step<
 fun coord(x: Int, y: Int) = SquareCoordinate(x, y)
 fun coordStep(x: Int, y: Int) = SquareCoordinateStep(x, y)
 
+fun SquareCoordinate.edgeUp() = EdgeCoordinate(this, coord(row - 1, column))
+fun SquareCoordinate.edgeDown() = EdgeCoordinate(this, coord(row + 1, column))
+fun SquareCoordinate.edgeLeft() = EdgeCoordinate(this, coord(row, column - 1))
+fun SquareCoordinate.edgeRight() = EdgeCoordinate(this, coord(row, column + 1))
+
 operator fun SquareCoordinateStep.plus(coordinate: SquareCoordinate) : SquareCoordinate {
     return takeStep(coordinate)
 }

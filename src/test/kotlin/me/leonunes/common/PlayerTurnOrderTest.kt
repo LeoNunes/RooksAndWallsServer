@@ -26,6 +26,13 @@ class PlayerTurnOrderTest {
     }
 
     @Test
+    fun `sequentialPlayerTurnOrder works properly when reversed`() {
+        val turnOrder = sequentialPlayerTurnOrder(3, startPlayer = 1, reversed = true).asSequence().take(10).toList()
+
+        assertEquals(listOf(1, 0, 2, 1, 0, 2, 1, 0, 2, 1), turnOrder)
+    }
+
+    @Test
     fun `alternatingSequencePlayerTurnOrder works properly with default configuration`() {
         val turnOrder = alternatingSequencePlayerTurnOrder(3).asSequence().take(10).toList()
 

@@ -8,7 +8,8 @@ import me.leonunes.model.*
 @Serializable
 data class GameStateDTO(
     val gameId: Int,
-    val gameStage: GameStage,
+    val config: GameConfigDTO,
+    val stage: GameStage,
     val currentTurn: Int?,
     val playerId: Int,
     val players: List<PlayerDTO>,
@@ -16,6 +17,10 @@ data class GameStateDTO(
     val walls: List<WallDTO>,
     val deadPieces: List<PieceDTO>
 )
+
+@Serializable
+data class GameConfigDTO(val numberOfPlayers: Int, val piecesPerPlayer: Int, val boardRows: Int, val boardColumns: Int)
+fun GameConfig.toDto() = GameConfigDTO(numberOfPlayers, piecesPerPlayer, boardRows, boardColumns)
 
 @Serializable
 data class PlayerDTO(val id: Int)
@@ -32,7 +37,8 @@ fun Wall.toDto() : WallDTO = WallDTO(position)
 fun Game.getStateDto(playerId: PlayerId) : GameStateDTO {
     return GameStateDTO(
         gameId = this.id.get(),
-        gameStage = gameStage,
+        config = config.toDto(),
+        stage = gameStage,
         currentTurn = currentTurn?.id?.get(),
         playerId = playerId.get(),
         players = players.map { it.toDto() },

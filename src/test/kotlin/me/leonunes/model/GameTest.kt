@@ -4,7 +4,9 @@ import io.mockk.junit4.MockKRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import me.leonunes.assertEach
+import me.leonunes.common.EdgeCoordinate
 import me.leonunes.common.coord
+import me.leonunes.common.edgeUp
 import org.junit.Rule
 import kotlin.test.*
 
@@ -29,9 +31,12 @@ class GameTest {
     }
 
     @Test
-    @Ignore
-    fun `player cant join if game is full`() {
-        assertTrue(false)
+    fun `player cant join if game is full`() : Unit = runBlocking {
+        with(createGameWithPlayers()) {
+            assertFailsWith<GameFullException> {
+                joinGame()
+            }
+        }
     }
 
     @Test
@@ -100,6 +105,49 @@ class GameTest {
     }
 
     @Test
+    fun `player cant add a piece outside of the board`() : Unit = runBlocking {
+        with(createGameWithPlayers()) {
+            assertFailsWith<InvalidActionException> {
+                processAction(AddPieceAction(player1, coord(8, 4)))
+            }
+        }
+    }
+
+    @Test
+    fun `move stage starting player depends on the placement piece player order`() = runBlocking {
+        with(createGameWithPlayers(GameConfig(piecesPerPlayer = 2))) {
+            listOf(
+                AddPieceAction(player1, coord(0, 0)),
+                AddPieceAction(player2, coord(0, 1)),
+                AddPieceAction(player3, coord(0, 2)),
+                AddPieceAction(player3, coord(0, 3)),
+                AddPieceAction(player2, coord(0, 4)),
+                AddPieceAction(player1, coord(0, 5)),
+            ).forEach { processAction(it) }
+
+            assertEquals(player3, currentTurn?.id)
+            processAction(MoveAction(player3, piece3_1, coord(1, 2), coord(7, 7).edgeUp()))
+            assertEquals(player2, currentTurn?.id)
+            processAction(MoveAction(player2, piece2_1, coord(1, 1), coord(7, 6).edgeUp()))
+            assertEquals(player1, currentTurn?.id)
+        }
+
+        with (createGameWithPlayers(GameConfig(piecesPerPlayer = 1))){
+            listOf(
+                AddPieceAction(player1, coord(0, 0)),
+                AddPieceAction(player2, coord(0, 1)),
+                AddPieceAction(player3, coord(0, 2)),
+            ).forEach { processAction(it) }
+
+            assertEquals(player1, currentTurn?.id)
+            processAction(MoveAction(player1, piece1_1, coord(1, 0), coord(7, 7).edgeUp()))
+            assertEquals(player2, currentTurn?.id)
+            processAction(MoveAction(player2, piece2_1, coord(1, 1), coord(7, 6).edgeUp()))
+            assertEquals(player3, currentTurn?.id)
+        }
+    }
+
+    @Test
     fun `players can move pieces`() = runBlocking {
         with(createGameWithPlayers()) {
             runAddPieceActions()
@@ -122,6 +170,37 @@ class GameTest {
             val action = winningMovePieceActions().drop(1).first()
 
             assertFailsWith<NotPlayersTurnException> { processAction(action) }
+        }
+    }
+
+    @Test
+    fun `player cant move pieces owned by other players`() : Unit = runBlocking {
+        with(createGameWithPlayers()) {
+            runAddPieceActions()
+
+            assertFailsWith<InvalidActionException> {
+                processAction(MoveAction(player1, piece2_3, coord(4, 7), EdgeCoordinate(coord(5, 5), coord(5, 6))))
+            }
+        }
+    }
+
+    @Test
+    @Ignore
+    fun `player can skip moving a piece if there is no valid destination`() = runBlocking {
+        with(createGameWithPlayers()) {
+            listOf(
+                AddPieceAction(player1, coord(0, 0)),
+                AddPieceAction(player2, coord(1, 0)),
+                AddPieceAction(player3, coord(2, 0)),
+                AddPieceAction(player3, coord(2, 1)),
+                AddPieceAction(player2, coord(1, 1)),
+                AddPieceAction(player1, coord(0, 1)),
+                AddPieceAction(player1, coord(0, 2)),
+                AddPieceAction(player2, coord(1, 2)),
+                AddPieceAction(player3, coord(0, 3)),
+            ).forEach { processAction(it) }
+
+            //processAction(MoveAction(player1, null, null, coord(5, 5).edgeDown()))
         }
     }
 
@@ -197,6 +276,57 @@ class GameTest {
 
             assertTrue(channel1.isClosedForReceive)
             assertTrue(channel2.isClosedForReceive)
+        }
+    }
+
+    @Test
+    fun `game can be configured`() {
+        assertEquals(GameConfigDefaultValues, GameFactory.createGame().config)
+
+        assertEquals(
+            GameConfig(numberOfPlayers = 5, piecesPerPlayer = 2, boardRows = 4, boardColumns = GameConfigDefaultValues.boardColumns),
+            GameFactory.createGame(GameConfig(numberOfPlayers = 5, piecesPerPlayer = 2, boardRows = 4)).config
+        )
+    }
+
+    @Test
+    fun `game can be configured for other number of players`() : Unit = runBlocking {
+        with(createGameWithPlayers(GameConfig(numberOfPlayers = 4))) {
+            assertEquals(4, players.size)
+            assertFailsWith<GameFullException> { joinGame() }
+        }
+    }
+
+    @Test
+    fun `game can be configured for other number of pieces per player`() : Unit = runBlocking {
+        with(createGameWithPlayers(GameConfig(piecesPerPlayer = 2))) {
+            listOf(
+                AddPieceAction(player1, coord(0, 0)),
+                AddPieceAction(player2, coord(4, 0)),
+                AddPieceAction(player3, coord(7, 0)),
+                AddPieceAction(player3, coord(7, 1)),
+                AddPieceAction(player2, coord(4, 1)),
+                AddPieceAction(player1, coord(0, 1)),
+            ).forEach { processAction(it) }
+
+            assertEquals(6, pieces.size)
+            assertEquals(GameStage.Moves, gameStage)
+        }
+    }
+
+    @Test
+    fun `game can be configured for other board sizes`() = runBlocking {
+        with(createGameWithPlayers(GameConfig(boardRows = 4, boardColumns = 5))) {
+            processAction(AddPieceAction(player1, coord(3, 4)))
+
+            assertFailsWith<InvalidActionException> {
+                processAction(AddPieceAction(player2, coord(4, 0)))
+            }
+            assertFailsWith<InvalidActionException> {
+                processAction(AddPieceAction(player2, coord(3, 5)))
+            }
+
+            processAction(AddPieceAction(player2, coord(3, 3)))
         }
     }
 }

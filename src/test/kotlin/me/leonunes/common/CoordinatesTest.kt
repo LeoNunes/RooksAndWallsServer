@@ -68,4 +68,24 @@ class CoordinatesTest {
             coord(10, 0) - coord(6, -2)
         )
     }
+
+    @Test
+    fun `shortcut to generate EdgeCoordinate from SquareCoordinate works`() {
+        assertEquals(
+            EdgeCoordinate(coord(3, 5), coord(4, 5)),
+            coord(3, 5).edgeDown()
+        )
+        assertEquals(
+            EdgeCoordinate(coord(3, 5), coord(4, 5)),
+            coord(4, 5).edgeUp()
+        )
+        assertEquals(
+            EdgeCoordinate(coord(5, 4), coord(5, 5)),
+            coord(5, 4).edgeRight()
+        )
+        assertEquals(
+            EdgeCoordinate(coord(5, 4), coord(5, 5)),
+            coord(5, 5).edgeLeft()
+        )
+    }
 }

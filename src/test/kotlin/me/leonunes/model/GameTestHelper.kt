@@ -6,19 +6,27 @@ import kotlinx.coroutines.runBlocking
 import me.leonunes.common.EdgeCoordinate
 import me.leonunes.common.coord
 
-fun createGameWithPlayers() : Game = runBlocking {
-    GameFactory.createGame().apply {
-        joinGame()
-        joinGame()
-        joinGame()
+fun createGameWithPlayers(config: GameConfig = GameConfigDefaultValues) : Game = runBlocking {
+    GameFactory.createGame(config).apply {
+        (0 until config.numberOfPlayers).forEach {
+            joinGame()
+        }
     }
 }
 
+/**
+ * Final Result:
+ * piece1_1: coord(0, 0)),
+ * piece1_2: coord(0, 1)),
+ * piece1_3: coord(0, 2)),
+ * piece2_1: coord(4, 0)),
+ * piece2_2: coord(4, 1)),
+ * piece2_3: coord(4, 2)),
+ * piece3_1: coord(7, 0)),
+ * piece3_2: coord(7, 1)),
+ * piece3_3: coord(7, 2)),
+ */
 fun Game.addPieceActions() : List<AddPieceAction> {
-    val player1 = players[0].id
-    val player2 = players[1].id
-    val player3 = players[2].id
-
     return listOf(
         AddPieceAction(player1, coord(0, 0)),
         AddPieceAction(player2, coord(4, 0)),
@@ -37,23 +45,6 @@ fun Game.runAddPieceActions() = runBlocking {
 }
 
 fun Game.winningMovePieceActions() : List<MoveAction> {
-    val pieces = piecesByPlayer()
-
-    val player1 = players[0].id
-    val piece1_1 = pieces[player1]!![0].id // Start at: (0, 0)
-    val piece1_2 = pieces[player1]!![1].id // Start at: (0, 1)
-    val piece1_3 = pieces[player1]!![2].id // Start at: (0, 2)
-
-    val player2 = players[1].id
-    val piece2_1 = pieces[player2]!![0].id // Start at: (4, 0)
-    val piece2_2 = pieces[player2]!![1].id // Start at: (4, 1)
-    val piece2_3 = pieces[player2]!![2].id // Start at: (4, 2)
-
-    val player3 = players[2].id
-    val piece3_1 = pieces[player3]!![0].id // Start at: (7, 0)
-    val piece3_2 = pieces[player3]!![1].id // Start at: (7, 1)
-    val piece3_3 = pieces[player3]!![2].id // Start at: (7, 2)
-
     return listOf(
         MoveAction(player1, piece1_3, coord(0, 7), EdgeCoordinate(coord(0, 0), coord(1, 0))),
         MoveAction(player2, piece2_3, coord(4, 7), EdgeCoordinate(coord(0, 1), coord(1, 1))),
@@ -80,23 +71,6 @@ fun Game.runWinningMovePieceActions() = runBlocking {
 }
 
 fun Game.drawingMovePieceActions() : List<MoveAction> {
-    val pieces = piecesByPlayer()
-
-    val player1 = players[0].id
-    val piece1_1 = pieces[player1]!![0].id // Start at: (0, 0)
-    val piece1_2 = pieces[player1]!![1].id // Start at: (0, 1)
-    val piece1_3 = pieces[player1]!![2].id // Start at: (0, 2)
-
-    val player2 = players[1].id
-    val piece2_1 = pieces[player2]!![0].id // Start at: (4, 0)
-    val piece2_2 = pieces[player2]!![1].id // Start at: (4, 1)
-    val piece2_3 = pieces[player2]!![2].id // Start at: (4, 2)
-
-    val player3 = players[2].id
-    val piece3_1 = pieces[player3]!![0].id // Start at: (7, 0)
-    val piece3_2 = pieces[player3]!![1].id // Start at: (7, 1)
-    val piece3_3 = pieces[player3]!![2].id // Start at: (7, 2)
-
     return listOf(
         MoveAction(player1, piece1_3, coord(0, 7), EdgeCoordinate(coord(0, 0), coord(1, 0))),
         MoveAction(player2, piece2_3, coord(4, 7), EdgeCoordinate(coord(0, 1), coord(1, 1))),
@@ -125,6 +99,19 @@ fun Game.runDrawingMovePieceActions() = runBlocking {
 fun Game.piecesByPlayer() : Map<PlayerId, List<Piece>> {
     return pieces.groupBy { it.owner.id }
 }
+
+val Game.player1 get() = players[0].id
+val Game.player2 get() = players[1].id
+val Game.player3 get() = players[2].id
+val Game.piece1_1 get() = piecesByPlayer()[player1]!![0].id
+val Game.piece1_2 get() = piecesByPlayer()[player1]!![1].id
+val Game.piece1_3 get() = piecesByPlayer()[player1]!![2].id
+val Game.piece2_1 get() = piecesByPlayer()[player2]!![0].id
+val Game.piece2_2 get() = piecesByPlayer()[player2]!![1].id
+val Game.piece2_3 get() = piecesByPlayer()[player2]!![2].id
+val Game.piece3_1 get() = piecesByPlayer()[player3]!![0].id
+val Game.piece3_2 get() = piecesByPlayer()[player3]!![1].id
+val Game.piece3_3 get() = piecesByPlayer()[player3]!![2].id
 
 @ExperimentalCoroutinesApi
 suspend fun ReceiveChannel<GameUpdate>.receiveInstant() : GameUpdate? {
