@@ -1,0 +1,13 @@
+# Used by AWS CodeBuild
+
+version: 0.2
+phases:
+  build:
+    on-failure: ABORT
+    commands:
+      - echo Building RooksAndWalls Application
+      - ./gradlew test buildFatJar
+artifacts:
+  files:
+    - build/libs/me.leonunes.rooksandwallsserver-all.jar
+  discard-paths: yes
