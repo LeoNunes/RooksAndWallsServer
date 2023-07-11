@@ -10,7 +10,8 @@ import io.ktor.server.resources.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import kotlinx.serialization.json.Json
-import me.leonunes.plugins.*
+import me.leonunes.plugins.configureGame
+import me.leonunes.plugins.configureHealthCheck
 import java.time.Duration
 
 fun main() {
@@ -21,6 +22,7 @@ fun main() {
 fun Application.module() {
     installPlugins()
 
+    configureHealthCheck()
     configureGame()
 }
 

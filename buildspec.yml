@@ -1,5 +1,8 @@
 # Used by AWS CodeBuild
 
+# gradlew needs chmod +x for it to be executed on CodeBuild
+# https://www.scivision.dev/git-windows-chmod-executable/
+
 version: 0.2
 phases:
   build:
