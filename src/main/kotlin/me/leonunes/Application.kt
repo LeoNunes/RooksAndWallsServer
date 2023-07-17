@@ -15,7 +15,7 @@ import me.leonunes.plugins.configureHealthCheck
 import java.time.Duration
 
 fun main() {
-    embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
+    embeddedServer(Netty, port = System.getenv("PORT").toIntOrNull() ?: 5000, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
 }
 
