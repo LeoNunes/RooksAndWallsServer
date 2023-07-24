@@ -34,3 +34,24 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     testImplementation("io.mockk:mockk:${mockk_version}")
 }
+
+ktor {
+    fatJar {
+        archiveFileName.set("server.jar")
+    }
+}
+
+tasks.register<Zip>("buildElasticBeanstalkZip") {
+    dependsOn("buildFatJar")
+
+    archiveFileName.set("elasticbeanstalk.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("aws"))
+
+    from(layout.buildDirectory.file("libs/server.jar"))
+    from(layout.projectDirectory.dir(".platform")) {
+        into(".platform")
+    }
+    from(layout.projectDirectory.dir(".ebextensions")) {
+        into(".ebextensions")
+    }
+}

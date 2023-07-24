@@ -10,7 +10,9 @@ phases:
     commands:
       - echo Building RooksAndWalls Application
       - ./gradlew test buildFatJar
+      - mv build/libs/server.jar server.jar
 artifacts:
   files:
-    - build/libs/me.leonunes.rooksandwallsserver-all.jar
-  discard-paths: yes
+    - server.jar
+    - .ebextensions/**/*
+    - .platform/**/*
