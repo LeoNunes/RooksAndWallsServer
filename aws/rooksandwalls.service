@@ -1,0 +1,15 @@
+[Unit]
+Description=Rooks and Walls Service
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/rooksandwalls/service.env
+ExecStart=/usr/bin/java -jar /opt/rooksandwalls/service.jar
+ExecStop=/bin/kill -15 $MAINPID
+User=ec2-user
+RemainAfterExit=no
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
