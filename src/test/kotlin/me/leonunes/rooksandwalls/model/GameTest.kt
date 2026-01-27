@@ -1,4 +1,4 @@
-package me.leonunes.model
+package me.leonunes.rooksandwalls.model
 
 import io.mockk.junit4.MockKRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -7,15 +7,6 @@ import me.leonunes.assertEach
 import me.leonunes.common.EdgeCoordinate
 import me.leonunes.common.coord
 import me.leonunes.common.edgeUp
-import me.leonunes.rooksandwalls.model.AddPieceAction
-import me.leonunes.rooksandwalls.model.GameConfig
-import me.leonunes.rooksandwalls.model.GameConfigDefaultValues
-import me.leonunes.rooksandwalls.model.GameFactory
-import me.leonunes.rooksandwalls.model.GameFullException
-import me.leonunes.rooksandwalls.model.GameStage
-import me.leonunes.rooksandwalls.model.InvalidActionException
-import me.leonunes.rooksandwalls.model.MoveAction
-import me.leonunes.rooksandwalls.model.NotPlayersTurnException
 import org.junit.Rule
 import kotlin.test.*
 

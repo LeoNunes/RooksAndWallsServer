@@ -1,4 +1,4 @@
-package me.leonunes.model
+package me.leonunes.rooksandwalls.model
 
 import io.mockk.confirmVerified
 import io.mockk.junit4.MockKRule
@@ -7,9 +7,6 @@ import io.mockk.verify
 import me.leonunes.common.EdgeCoordinate
 import me.leonunes.common.asId
 import me.leonunes.common.coord
-import me.leonunes.rooksandwalls.model.AddPieceAction
-import me.leonunes.rooksandwalls.model.GameImp
-import me.leonunes.rooksandwalls.model.MoveAction
 import org.junit.Rule
 import kotlin.test.Test
 

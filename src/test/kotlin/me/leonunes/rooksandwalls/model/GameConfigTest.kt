@@ -1,8 +1,5 @@
-package me.leonunes.model
+package me.leonunes.rooksandwalls.model
 
-import me.leonunes.rooksandwalls.model.GameConfig
-import me.leonunes.rooksandwalls.model.GameConfigDefaultValues
-import me.leonunes.rooksandwalls.model.InvalidConfigurationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

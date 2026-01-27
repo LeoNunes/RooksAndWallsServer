@@ -1,19 +1,10 @@
-package me.leonunes.model
+package me.leonunes.rooksandwalls.model
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.runBlocking
 import me.leonunes.common.EdgeCoordinate
 import me.leonunes.common.coord
-import me.leonunes.rooksandwalls.model.AddPieceAction
-import me.leonunes.rooksandwalls.model.Game
-import me.leonunes.rooksandwalls.model.GameConfig
-import me.leonunes.rooksandwalls.model.GameConfigDefaultValues
-import me.leonunes.rooksandwalls.model.GameFactory
-import me.leonunes.rooksandwalls.model.GameUpdate
-import me.leonunes.rooksandwalls.model.MoveAction
-import me.leonunes.rooksandwalls.model.Piece
-import me.leonunes.rooksandwalls.model.PlayerId
 
 fun createGameWithPlayers(config: GameConfig = GameConfigDefaultValues) : Game = runBlocking {
     GameFactory.createGame(config).apply {
