@@ -1,11 +1,13 @@
 package me.leonunes
 
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
@@ -39,4 +41,12 @@ fun Application.installPlugins() {
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
     }
     install(IgnoreTrailingSlash)
+    install(CORS) {
+        if (this@installPlugins.developmentMode) {
+            allowHost("localhost:3000", schemes = listOf("http"))
+            allowHost("127.0.0.1:3000", schemes = listOf("http"))
+        }
+        allowHost("leonunes.me", subDomains = listOf("rw"), schemes = listOf("https"))
+        allowHeader(HttpHeaders.ContentType)
+    }
 }
