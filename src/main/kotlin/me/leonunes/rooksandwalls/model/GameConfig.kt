@@ -1,4 +1,4 @@
-package me.leonunes.model
+package me.leonunes.rooksandwalls.model
 
 val GameConfigDefaultValues = GameConfig(3, 3, 8, 8)
 

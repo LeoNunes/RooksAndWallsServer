@@ -4,6 +4,9 @@ import io.mockk.junit4.MockKRule
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import me.leonunes.common.*
+import me.leonunes.rooksandwalls.model.Board
+import me.leonunes.rooksandwalls.model.Piece
+import me.leonunes.rooksandwalls.model.Player
 import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals

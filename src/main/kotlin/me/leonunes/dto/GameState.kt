@@ -3,7 +3,13 @@ package me.leonunes.dto
 import kotlinx.serialization.Serializable
 import me.leonunes.common.EdgeCoordinate
 import me.leonunes.common.SquareCoordinate
-import me.leonunes.model.*
+import me.leonunes.rooksandwalls.model.Game
+import me.leonunes.rooksandwalls.model.GameConfig
+import me.leonunes.rooksandwalls.model.GameStage
+import me.leonunes.rooksandwalls.model.Piece
+import me.leonunes.rooksandwalls.model.Player
+import me.leonunes.rooksandwalls.model.PlayerId
+import me.leonunes.rooksandwalls.model.Wall
 
 @Serializable
 data class GameStateDTO(

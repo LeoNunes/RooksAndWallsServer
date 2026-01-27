@@ -14,9 +14,9 @@ import kotlinx.serialization.Serializable
 import me.leonunes.common.asId
 import me.leonunes.dto.ActionDTO
 import me.leonunes.dto.getStateDto
-import me.leonunes.model.GameConfig
-import me.leonunes.model.GameFactory
-import me.leonunes.model.GameId
+import me.leonunes.rooksandwalls.model.GameConfig
+import me.leonunes.rooksandwalls.model.GameFactory
+import me.leonunes.rooksandwalls.model.GameId
 
 const val apiPathPrefix = "/rw"
 

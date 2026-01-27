@@ -1,4 +1,4 @@
-package me.leonunes.model
+package me.leonunes.rooksandwalls.model
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED

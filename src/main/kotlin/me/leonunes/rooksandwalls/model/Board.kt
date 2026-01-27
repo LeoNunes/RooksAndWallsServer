@@ -1,4 +1,4 @@
-package me.leonunes.model
+package me.leonunes.rooksandwalls.model
 
 import me.leonunes.common.*
 

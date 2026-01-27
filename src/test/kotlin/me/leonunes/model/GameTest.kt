@@ -7,6 +7,15 @@ import me.leonunes.assertEach
 import me.leonunes.common.EdgeCoordinate
 import me.leonunes.common.coord
 import me.leonunes.common.edgeUp
+import me.leonunes.rooksandwalls.model.AddPieceAction
+import me.leonunes.rooksandwalls.model.GameConfig
+import me.leonunes.rooksandwalls.model.GameConfigDefaultValues
+import me.leonunes.rooksandwalls.model.GameFactory
+import me.leonunes.rooksandwalls.model.GameFullException
+import me.leonunes.rooksandwalls.model.GameStage
+import me.leonunes.rooksandwalls.model.InvalidActionException
+import me.leonunes.rooksandwalls.model.MoveAction
+import me.leonunes.rooksandwalls.model.NotPlayersTurnException
 import org.junit.Rule
 import kotlin.test.*
 
@@ -284,7 +293,12 @@ class GameTest {
         assertEquals(GameConfigDefaultValues, GameFactory.createGame().config)
 
         assertEquals(
-            GameConfig(numberOfPlayers = 5, piecesPerPlayer = 2, boardRows = 4, boardColumns = GameConfigDefaultValues.boardColumns),
+            GameConfig(
+                numberOfPlayers = 5,
+                piecesPerPlayer = 2,
+                boardRows = 4,
+                boardColumns = GameConfigDefaultValues.boardColumns
+            ),
             GameFactory.createGame(GameConfig(numberOfPlayers = 5, piecesPerPlayer = 2, boardRows = 4)).config
         )
     }

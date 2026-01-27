@@ -7,7 +7,13 @@ import io.mockk.mockk
 import me.leonunes.common.EdgeCoordinate
 import me.leonunes.common.asId
 import me.leonunes.common.coord
-import me.leonunes.model.*
+import me.leonunes.rooksandwalls.model.Board
+import me.leonunes.rooksandwalls.model.Game
+import me.leonunes.rooksandwalls.model.GameConfigDefaultValues
+import me.leonunes.rooksandwalls.model.GameStage
+import me.leonunes.rooksandwalls.model.Piece
+import me.leonunes.rooksandwalls.model.Player
+import me.leonunes.rooksandwalls.model.Wall
 import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals

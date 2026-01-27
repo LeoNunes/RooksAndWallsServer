@@ -2,7 +2,10 @@ package me.leonunes.dto
 
 import kotlinx.serialization.Serializable
 import me.leonunes.common.*
-import me.leonunes.model.*
+import me.leonunes.rooksandwalls.model.AddPieceAction
+import me.leonunes.rooksandwalls.model.GameAction
+import me.leonunes.rooksandwalls.model.MoveAction
+import me.leonunes.rooksandwalls.model.PlayerId
 import kotlin.reflect.full.memberProperties
 
 @Serializable
