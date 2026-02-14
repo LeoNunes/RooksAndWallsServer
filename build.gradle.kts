@@ -4,9 +4,15 @@ val logback_version: String by project
 val mockk_version: String by project
 
 plugins {
-    kotlin("jvm") version "1.8.22"
-    id("io.ktor.plugin") version "2.3.1"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.22"
+    kotlin("jvm") version "2.3.0"
+    id("io.ktor.plugin") version "3.4.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 group = "me.leonunes"
@@ -23,15 +29,15 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
+    implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-server-cors:$ktor_version")
-    implementation("io.ktor:ktor-server-websockets-jvm:$ktor_version")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktor_version")
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
+    implementation("io.ktor:ktor-server-websockets:$ktor_version")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
     implementation("io.ktor:ktor-server-resources:$ktor_version")
-    implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
+    implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
+    testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     testImplementation("io.mockk:mockk:${mockk_version}")
 }

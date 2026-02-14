@@ -12,9 +12,9 @@ import io.ktor.server.resources.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration.Companion.seconds
 import me.leonunes.plugins.configureGame
 import me.leonunes.plugins.configureHealthCheck
-import java.time.Duration
 
 fun main() {
     embeddedServer(Netty, port = System.getenv("PORT")?.toIntOrNull() ?: 5000, host = "0.0.0.0", module = Application::module)
@@ -34,8 +34,8 @@ fun Application.installPlugins() {
     }
     install(Resources)
     install(WebSockets) {
-        pingPeriod = Duration.ofSeconds(15)
-        timeout = Duration.ofSeconds(15)
+        pingPeriod = 15.seconds
+        timeout = 15.seconds
         maxFrameSize = Long.MAX_VALUE
         masking = false
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
