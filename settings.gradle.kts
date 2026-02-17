@@ -1,1 +1,1 @@
-rootProject.name = "me.leonunes.rooksandwallsserver"
+rootProject.name = "me.leonunes.games"
