@@ -12,9 +12,9 @@ import io.ktor.server.resources.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import kotlinx.serialization.json.Json
-import kotlin.time.Duration.Companion.seconds
 import me.leonunes.plugins.configureGame
 import me.leonunes.plugins.configureHealthCheck
+import kotlin.time.Duration.Companion.seconds
 
 fun main() {
     embeddedServer(Netty, port = System.getenv("PORT")?.toIntOrNull() ?: 5000, host = "0.0.0.0", module = Application::module)
@@ -43,8 +43,8 @@ fun Application.installPlugins() {
     install(IgnoreTrailingSlash)
     install(CORS) {
         if (this@installPlugins.developmentMode) {
-            allowHost("localhost:3000", schemes = listOf("http"))
-            allowHost("127.0.0.1:3000", schemes = listOf("http"))
+            allowHost("localhost:5173", schemes = listOf("http"))
+            allowHost("127.0.0.1:5173", schemes = listOf("http"))
         }
         allowHost("leonunes.me", subDomains = listOf("rw"), schemes = listOf("https"))
         allowHeader(HttpHeaders.ContentType)
