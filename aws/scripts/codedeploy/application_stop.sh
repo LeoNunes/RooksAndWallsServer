@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Stop the service
-systemctl stop rooksandwalls
+systemctl stop games || true

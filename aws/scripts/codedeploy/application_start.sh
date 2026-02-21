@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Start the service
-systemctl start rooksandwalls
+systemctl start games
