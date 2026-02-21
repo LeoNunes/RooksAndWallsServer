@@ -1,10 +1,10 @@
 [Unit]
-Description=Rooks and Walls Service
+Description=Games Service
 
 [Service]
 Type=simple
-EnvironmentFile=/etc/rooksandwalls/service.env
-ExecStart=/usr/bin/java -jar /opt/rooksandwalls/service.jar
+EnvironmentFile=/etc/games/service.env
+ExecStart=/usr/bin/java -jar /opt/games/service.jar
 ExecStop=/bin/kill -15 $MAINPID
 User=ec2-user
 RemainAfterExit=no

@@ -7,32 +7,27 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /opt/rooksandwalls/
-  - source: /rooksandwalls.service
-    destination: /lib/systemd/system
+    destination: /opt/games/
 permissions:
-  - object: /opt/rooksandwalls
+  - object: /opt/games
     pattern: "**"
     owner: ec2-user
     group: ec2-user
-  - object: /lib/systemd/system/rooksandwalls.service
-    owner: root
-    group: root
 hooks:
   ApplicationStop:
-    - location: /scripts/codedeploy/application_stop.sh
+    - location: scripts/codedeploy/application_stop.sh
       timeout: 300
       runas: root
   BeforeInstall:
-    - location: /scripts/codedeploy/before_install.sh
+    - location: scripts/codedeploy/before_install.sh
       timeout: 30
       runas: root
   AfterInstall:
-    - location: /scripts/codedeploy/after_install.sh
-      timeout: 30
+    - location: scripts/codedeploy/after_install.sh
+      timeout: 90
       runas: root
   ApplicationStart:
-    - location: /scripts/codedeploy/application_start.sh
+    - location: scripts/codedeploy/application_start.sh
       timeout: 30
       runas: root
 #  ValidateService:
