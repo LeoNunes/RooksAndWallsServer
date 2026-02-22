@@ -4,7 +4,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import me.leonunes.plugins.configureGame
+import me.leonunes.games.plugins.configureGame
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals

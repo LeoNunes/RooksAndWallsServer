@@ -18,7 +18,7 @@ java {
 group = "me.leonunes"
 version = "0.0.1"
 application {
-    mainClass.set("me.leonunes.ApplicationKt")
+    mainClass.set("me.leonunes.games.ApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
