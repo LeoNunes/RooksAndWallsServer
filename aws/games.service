@@ -3,6 +3,7 @@ Description=Games Service
 
 [Service]
 Type=simple
+EnvironmentFile=/etc/games/infra.env
 EnvironmentFile=/etc/games/service.env
 ExecStart=/usr/bin/java -jar /opt/games/service.jar
 ExecStop=/bin/kill -15 $MAINPID

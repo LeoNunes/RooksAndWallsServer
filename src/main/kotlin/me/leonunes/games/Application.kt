@@ -17,7 +17,7 @@ import me.leonunes.games.plugins.configureHealthCheck
 import kotlin.time.Duration.Companion.seconds
 
 fun main() {
-    embeddedServer(Netty, port = System.getenv("PORT")?.toIntOrNull() ?: 5000, host = "0.0.0.0", module = Application::module)
+    embeddedServer(Netty, port = System.getenv("GAMES_PORT")?.toIntOrNull() ?: 5000, host = "127.0.0.1", module = Application::module)
         .start(wait = true)
 }
 

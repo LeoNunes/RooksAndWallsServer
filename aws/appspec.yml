@@ -20,7 +20,7 @@ hooks:
       runas: root
   BeforeInstall:
     - location: scripts/codedeploy/before_install.sh
-      timeout: 30
+      timeout: 300
       runas: root
   AfterInstall:
     - location: scripts/codedeploy/after_install.sh
@@ -28,7 +28,7 @@ hooks:
       runas: root
   ApplicationStart:
     - location: scripts/codedeploy/application_start.sh
-      timeout: 30
+      timeout: 300
       runas: root
 #  ValidateService:
 #    - location:
