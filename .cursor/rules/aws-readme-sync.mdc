@@ -1,0 +1,22 @@
+---
+description: Keep aws/README.md in sync whenever AWS deployment scripts or nginx templates are modified
+globs: aws/**/*.sh,aws/nginx/**
+alwaysApply: false
+---
+
+# Keep aws/README.md in Sync
+
+Whenever you modify any file under `aws/` (scripts, nginx templates, service files), you **must** also update `aws/README.md` to reflect the change.
+
+## What to update
+
+- **CodeDeploy Hooks section** — if a script's responsibilities change (steps added, removed, or reordered)
+- **Nginx Contract section** — if template files or `envsubst` variable substitutions change
+- **appspec.yml Expectations** — if new files or directories need to be copied to the instance
+- **Required Environment Files / Secrets Manager Contract** — if new env vars are read or validated
+- **before_install.sh hook** — if new packages are installed
+
+## What NOT to do
+
+- Do not skip the README update even for "small" script changes — behavior drift between docs and scripts is the main failure mode.
+- Do not describe *how* you changed the code in the README; describe the *current* behavior after the change.
