@@ -46,7 +46,7 @@ fun Application.installPlugins() {
             allowHost("localhost:5173", schemes = listOf("http"))
             allowHost("127.0.0.1:5173", schemes = listOf("http"))
         }
-        allowHost("leonunes.me", subDomains = listOf("rw"), schemes = listOf("https"))
+        allowHost("*.games.leonunes.me", schemes = listOf("https"))
         allowHeader(HttpHeaders.ContentType)
     }
 }
