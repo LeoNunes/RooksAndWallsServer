@@ -54,6 +54,7 @@ class GameStateTest {
         every { game.gameStage } returns GameStage.PiecePlacement
         every { game.currentTurn } returns player2
         every { game.players } returns players
+        every { game.remainingPlayers } returns players
         every { game.pieces } returns pieces
         every { game.walls } returns walls
         every { game.deadPieces } returns deadPieces
@@ -70,6 +71,10 @@ class GameStateTest {
         assertEquals(
             players.map { PlayerDTO(it.id.get()) }.toSet(),
             dto.players.toSet()
+        )
+        assertEquals(
+            players.map { PlayerDTO(it.id.get()) }.toSet(),
+            dto.remainingPlayers.toSet()
         )
         assertEquals(
             pieces.map { PieceDTO(it.id.get(), it.owner.id.get(), it.position) }.toSet(),

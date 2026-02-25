@@ -19,6 +19,7 @@ data class GameStateDTO(
     val currentTurn: Int?,
     val playerId: Int,
     val players: List<PlayerDTO>,
+    val remainingPlayers: List<PlayerDTO>,
     val pieces: List<PieceDTO>,
     val walls: List<WallDTO>,
     val deadPieces: List<PieceDTO>
@@ -48,6 +49,7 @@ fun Game.getStateDto(playerId: PlayerId) : GameStateDTO {
         currentTurn = currentTurn?.id?.get(),
         playerId = playerId.get(),
         players = players.map { it.toDto() },
+        remainingPlayers = remainingPlayers.map { it.toDto() },
         pieces = pieces.map { it.toDto() },
         walls = walls.map { it.toDto() },
         deadPieces = deadPieces.map { it.toDto() },
