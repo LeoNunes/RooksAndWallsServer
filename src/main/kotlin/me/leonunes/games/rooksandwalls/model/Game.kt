@@ -162,46 +162,46 @@ class GameImp private constructor(override val id: GameId, override val config: 
         }
     }
 
-    fun addPiece(playerId: PlayerId, position: SquareCoordinate) {
+    private fun processAddPieceAction(action: AddPieceAction) {
         assertGameStage(GameStage.PiecePlacement)
 
-        val player = getPlayerById(playerId)
+        val player = getPlayerById(action.playerId)
         assertPlayersTurn(player)
 
-        if (!board.isInsideBoard(position)) {
+        if (!board.isInsideBoard(action.position)) {
             throw InvalidActionException("Position is not inside board")
         }
 
-        if (getPieceByPosition(position) != null) {
+        if (getPieceByPosition(action.position) != null) {
             throw InvalidActionException("Position is already occupied")
         }
 
-        board.pieces.add(Piece(nextPieceId++.asId(), player, position, board))
+        board.pieces.add(Piece(nextPieceId++.asId(), player, action.position, board))
         endTurn()
     }
 
-    fun move(playerId: PlayerId, pieceMovement: PieceMovement?, wallPlacement: WallPlacement) {
+    private fun processMoveAction(action: MoveAction) {
         assertGameStage(GameStage.Moves)
 
-        val player = getPlayerById(playerId)
+        val player = getPlayerById(action.playerId)
         assertPlayersTurn(player)
 
-        if (getWallByPosition(wallPlacement.wallPosition) != null) {
+        if (getWallByPosition(action.wallPlacement.wallPosition) != null) {
             throw InvalidActionException("Wall position is already occupied")
         }
-        if (!board.isInsideBoard(wallPlacement.wallPosition)) {
+        if (!board.isInsideBoard(action.wallPlacement.wallPosition)) {
             throw InvalidActionException("Wall position is outside the board")
         }
 
-        if (pieceMovement != null) {
-            val piece = getPieceById(pieceMovement.pieceId)
+        if (action.pieceMovement != null) {
+            val piece = getPieceById(action.pieceMovement.pieceId)
             if (piece.owner != player) {
                 throw InvalidActionException("Piece not owned by player")
             }
-            if (!piece.movement.canMoveTo(pieceMovement.position)) {
+            if (!piece.movement.canMoveTo(action.pieceMovement.position)) {
                 throw InvalidActionException("Piece can't move to this position")
             }
-            piece.position = pieceMovement.position
+            piece.position = action.pieceMovement.position
         } else {
             val hasLegalMoves = board.pieces
                 .filter { it.owner == player }
@@ -211,13 +211,16 @@ class GameImp private constructor(override val id: GameId, override val config: 
             }
         }
 
-        board.walls.add(Wall(wallPlacement.wallPosition))
+        board.walls.add(Wall(action.wallPlacement.wallPosition))
         endTurn()
     }
 
     override suspend fun processAction(action: GameAction) {
         gameMutex.withLock {
-            action.process(this)
+            when (action) {
+                is AddPieceAction -> processAddPieceAction(action)
+                is MoveAction -> processMoveAction(action)
+            }
             notifyUpdates()
         }
     }
