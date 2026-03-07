@@ -14,6 +14,7 @@ import io.ktor.server.websocket.*
 import kotlinx.serialization.json.Json
 import me.leonunes.games.plugins.configureGame
 import me.leonunes.games.plugins.configureHealthCheck
+import me.leonunes.games.plugins.configureUsers
 import kotlin.time.Duration.Companion.seconds
 
 fun main() {
@@ -26,6 +27,7 @@ fun Application.module() {
 
     configureHealthCheck()
     configureGame()
+    configureUsers()
 }
 
 fun Application.installPlugins() {
