@@ -40,6 +40,14 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     testImplementation("io.mockk:mockk:${mockk_version}")
+
+    // JWT validation
+    implementation("com.auth0:java-jwt:4.4.0")
+    implementation("com.auth0:jwks-rsa:0.22.1")
+
+    // AWS SDK for DynamoDB
+    implementation(platform("software.amazon.awssdk:bom:2.31.0"))
+    implementation("software.amazon.awssdk:dynamodb")
 }
 
 ktor {
