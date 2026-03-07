@@ -1,6 +1,6 @@
 ---
 description: Keep aws/README.md in sync whenever AWS deployment scripts or nginx templates are modified
-globs: aws/**/*.sh,aws/nginx/**
+globs: aws/**
 alwaysApply: false
 ---
 
