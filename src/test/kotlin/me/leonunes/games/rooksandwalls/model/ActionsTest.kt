@@ -29,11 +29,13 @@ class ActionsTest {
     @Test
     fun `MoveAction works properly`() {
         val game = mockk<GameImp>(relaxUnitFun = true)
-        val action = MoveAction(3.asId(), 5.asId(), coord(2, 5), EdgeCoordinate(coord(2, 5), coord(3, 5)))
+        val pieceMovement = PieceMovement(5.asId(), coord(2, 5))
+        val wallPlacement = WallPlacement(EdgeCoordinate(coord(2, 5), coord(3, 5)))
+        val action = MoveAction(3.asId(), pieceMovement, wallPlacement)
 
         action.process(game)
 
-        verify(exactly = 1) { game.move(3.asId(), 5.asId(), coord(2, 5), EdgeCoordinate(coord(2, 5), coord(3, 5))) }
+        verify(exactly = 1) { game.move(3.asId(), pieceMovement, wallPlacement) }
 
         confirmVerified(game)
     }

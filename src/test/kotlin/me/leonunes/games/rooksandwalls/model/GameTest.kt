@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import me.leonunes.games.assertEach
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.coord
+import me.leonunes.games.common.edgeDown
 import me.leonunes.games.common.edgeUp
 import org.junit.Rule
 import kotlin.test.*
@@ -126,9 +127,9 @@ class GameTest {
             ).forEach { processAction(it) }
 
             assertEquals(player3, currentTurn?.id)
-            processAction(MoveAction(player3, piece3_1, coord(1, 2), coord(7, 7).edgeUp()))
+            processAction(MoveAction(player3, PieceMovement(piece3_1, coord(1, 2)), WallPlacement(coord(7, 7).edgeUp())))
             assertEquals(player2, currentTurn?.id)
-            processAction(MoveAction(player2, piece2_1, coord(1, 1), coord(7, 6).edgeUp()))
+            processAction(MoveAction(player2, PieceMovement(piece2_1, coord(1, 1)), WallPlacement(coord(7, 6).edgeUp())))
             assertEquals(player1, currentTurn?.id)
         }
 
@@ -140,9 +141,9 @@ class GameTest {
             ).forEach { processAction(it) }
 
             assertEquals(player1, currentTurn?.id)
-            processAction(MoveAction(player1, piece1_1, coord(1, 0), coord(7, 7).edgeUp()))
+            processAction(MoveAction(player1, PieceMovement(piece1_1, coord(1, 0)), WallPlacement(coord(7, 7).edgeUp())))
             assertEquals(player2, currentTurn?.id)
-            processAction(MoveAction(player2, piece2_1, coord(1, 1), coord(7, 6).edgeUp()))
+            processAction(MoveAction(player2, PieceMovement(piece2_1, coord(1, 1)), WallPlacement(coord(7, 6).edgeUp())))
             assertEquals(player3, currentTurn?.id)
         }
     }
@@ -157,7 +158,7 @@ class GameTest {
 
             assertTrue(action.playerId != currentTurn!!.id)
             assertTrue(pieces.find {
-                it.id == action.pieceId && it.position == action.piecePosition && it.owner.id == action.playerId
+                it.id == action.pieceMovement!!.pieceId && it.position == action.pieceMovement!!.position && it.owner.id == action.playerId
             } != null)
         }
     }
@@ -179,13 +180,12 @@ class GameTest {
             runAddPieceActions()
 
             assertFailsWith<InvalidActionException> {
-                processAction(MoveAction(player1, piece2_3, coord(4, 7), EdgeCoordinate(coord(5, 5), coord(5, 6))))
+                processAction(MoveAction(player1, PieceMovement(piece2_3, coord(4, 7)), WallPlacement(EdgeCoordinate(coord(5, 5), coord(5, 6)))))
             }
         }
     }
 
     @Test
-    @Ignore
     fun `player can skip moving a piece if there is no valid destination`() = runBlocking {
         with(createGameWithPlayers()) {
             listOf(
@@ -200,7 +200,24 @@ class GameTest {
                 AddPieceAction(player3, coord(0, 3)),
             ).forEach { processAction(it) }
 
-            //processAction(MoveAction(player1, null, null, coord(5, 5).edgeDown()))
+            // player1 goes first; all their pieces are fully surrounded — wall-only move
+            assertEquals(player1, currentTurn?.id)
+            processAction(MoveAction(player1, null, WallPlacement(coord(5, 5).edgeDown())))
+
+            // wall was placed, turn passed to player2
+            assertEquals(1, walls.size)
+            assertEquals(player2, currentTurn?.id)
+        }
+    }
+
+    @Test
+    fun `player cant skip moving a piece if they have legal moves`() : Unit = runBlocking {
+        with(createGameWithPlayers()) {
+            runAddPieceActions()
+
+            assertFailsWith<InvalidActionException> {
+                processAction(MoveAction(player1, null, WallPlacement(coord(5, 5).edgeDown())))
+            }
         }
     }
 
