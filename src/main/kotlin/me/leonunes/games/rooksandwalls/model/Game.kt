@@ -186,6 +186,13 @@ class GameImp private constructor(override val id: GameId, override val config: 
         val player = getPlayerById(playerId)
         assertPlayersTurn(player)
 
+        if (getWallByPosition(wallPlacement.wallPosition) != null) {
+            throw InvalidActionException("Wall position is already occupied")
+        }
+        if (!board.isInsideBoard(wallPlacement.wallPosition)) {
+            throw InvalidActionException("Wall position is outside the board")
+        }
+
         if (pieceMovement != null) {
             val piece = getPieceById(pieceMovement.pieceId)
             if (piece.owner != player) {
@@ -202,13 +209,6 @@ class GameImp private constructor(override val id: GameId, override val config: 
             if (hasLegalMoves) {
                 throw InvalidActionException("Player has legal moves and must move a piece")
             }
-        }
-
-        if (getWallByPosition(wallPlacement.wallPosition) != null) {
-            throw InvalidActionException("Wall position is already occupied")
-        }
-        if (!board.isInsideBoard(wallPlacement.wallPosition)) {
-            throw InvalidActionException("Wall position is outside the board")
         }
 
         board.walls.add(Wall(wallPlacement.wallPosition))

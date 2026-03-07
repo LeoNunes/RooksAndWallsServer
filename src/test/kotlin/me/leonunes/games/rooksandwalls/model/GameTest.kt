@@ -175,6 +175,26 @@ class GameTest {
     }
 
     @Test
+    fun `piece position is not changed if wall placement fails`() : Unit = runBlocking {
+        with(createGameWithPlayers()) {
+            runAddPieceActions()
+
+            val firstMove = winningMovePieceActions().first()
+            processAction(firstMove)
+
+            // Place a wall so the next move will fail due to occupied wall position
+            val occupiedWall = walls.first().position
+            val originalPosition = pieces.find { it.id == piece2_3 }!!.position
+
+            assertFailsWith<InvalidActionException> {
+                processAction(MoveAction(player2, PieceMovement(piece2_3, coord(4, 7)), WallPlacement(occupiedWall)))
+            }
+
+            assertEquals(originalPosition, pieces.find { it.id == piece2_3 }!!.position)
+        }
+    }
+
+    @Test
     fun `player cant move pieces owned by other players`() : Unit = runBlocking {
         with(createGameWithPlayers()) {
             runAddPieceActions()
