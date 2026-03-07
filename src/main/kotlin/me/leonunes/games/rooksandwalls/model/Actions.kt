@@ -8,21 +8,12 @@ data class WallPlacement(val wallPosition: EdgeCoordinate)
 
 sealed interface GameAction {
     val playerId: PlayerId
-    fun process(game: GameImp)
 }
 
-data class AddPieceAction(override val playerId: PlayerId, val position: SquareCoordinate) : GameAction {
-    override fun process(game: GameImp) {
-        game.addPiece(playerId, position)
-    }
-}
+data class AddPieceAction(override val playerId: PlayerId, val position: SquareCoordinate) : GameAction
 
 data class MoveAction(
     override val playerId: PlayerId,
     val pieceMovement: PieceMovement?,
     val wallPlacement: WallPlacement
-) : GameAction {
-    override fun process(game: GameImp) {
-        game.move(playerId, pieceMovement, wallPlacement)
-    }
-}
+) : GameAction

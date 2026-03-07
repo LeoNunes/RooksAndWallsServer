@@ -162,7 +162,7 @@ class GameImp private constructor(override val id: GameId, override val config: 
         }
     }
 
-    fun addPiece(playerId: PlayerId, position: SquareCoordinate) {
+    private fun addPiece(playerId: PlayerId, position: SquareCoordinate) {
         assertGameStage(GameStage.PiecePlacement)
 
         val player = getPlayerById(playerId)
@@ -180,7 +180,7 @@ class GameImp private constructor(override val id: GameId, override val config: 
         endTurn()
     }
 
-    fun move(playerId: PlayerId, pieceMovement: PieceMovement?, wallPlacement: WallPlacement) {
+    private fun move(playerId: PlayerId, pieceMovement: PieceMovement?, wallPlacement: WallPlacement) {
         assertGameStage(GameStage.Moves)
 
         val player = getPlayerById(playerId)
@@ -217,7 +217,10 @@ class GameImp private constructor(override val id: GameId, override val config: 
 
     override suspend fun processAction(action: GameAction) {
         gameMutex.withLock {
-            action.process(this)
+            when (action) {
+                is AddPieceAction -> addPiece(action.playerId, action.position)
+                is MoveAction -> move(action.playerId, action.pieceMovement, action.wallPlacement)
+            }
             notifyUpdates()
         }
     }
