@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import me.leonunes.games.common.asId
 import me.leonunes.games.dto.ActionDTO
 import me.leonunes.games.dto.getStateDto
+import me.leonunes.games.AppDependencies
 import me.leonunes.games.rooksandwalls.model.GameConfig
 import me.leonunes.games.rooksandwalls.model.GameFactory
 import me.leonunes.games.rooksandwalls.model.GameId
@@ -42,16 +43,27 @@ fun Application.configureGame() {
                 return@webSocket
             }
 
-            val playerId = game.joinGame(UUID.randomUUID().toString())
+            val token = call.parameters["token"]
+            val playerId: String = if (token != null) {
+                val sub = AppDependencies.jwtValidator?.validate(token)
+                if (sub == null) {
+                    close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
+                    return@webSocket
+                }
+                sub
+            } else {
+                UUID.randomUUID().toString()
+            }
+            val playerIdResult = game.joinGame(playerId)
             // TODO: Handle disconnect
 
-            sendSerialized(game.getStateDto(playerId))
+            sendSerialized(game.getStateDto(playerIdResult))
 
             launch {
                 val channel = game.createUpdatesChannel()
                 try {
                     for (update in channel) {
-                        sendSerialized(game.getStateDto(playerId))
+                        sendSerialized(game.getStateDto(playerIdResult))
                     }
                 }
                 finally {
@@ -63,7 +75,7 @@ fun Application.configureGame() {
                 while (isActive) {
                     try {
                         val dto = receiveDeserialized<ActionDTO>()
-                        game.processAction(dto.getAction(playerId))
+                        game.processAction(dto.getAction(playerIdResult))
                     }
                     // TODO: Handle fails properly
                     catch (e: Exception) {
