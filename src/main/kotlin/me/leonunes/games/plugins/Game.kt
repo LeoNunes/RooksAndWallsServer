@@ -17,6 +17,7 @@ import me.leonunes.games.dto.getStateDto
 import me.leonunes.games.rooksandwalls.model.GameConfig
 import me.leonunes.games.rooksandwalls.model.GameFactory
 import me.leonunes.games.rooksandwalls.model.GameId
+import java.util.UUID
 
 const val apiPathPrefix = "/rw"
 
@@ -41,7 +42,7 @@ fun Application.configureGame() {
                 return@webSocket
             }
 
-            val playerId = game.joinGame()
+            val playerId = game.joinGame(UUID.randomUUID().toString())
             // TODO: Handle disconnect
 
             sendSerialized(game.getStateDto(playerId))
