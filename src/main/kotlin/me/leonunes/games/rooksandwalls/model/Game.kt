@@ -180,31 +180,38 @@ class GameImp private constructor(override val id: GameId, override val config: 
         endTurn()
     }
 
-    fun move(playerId: PlayerId, pieceId: PieceId, pieceDestination: SquareCoordinate, wallPosition: EdgeCoordinate) {
+    fun move(playerId: PlayerId, pieceMovement: PieceMovement?, wallPlacement: WallPlacement) {
         assertGameStage(GameStage.Moves)
 
         val player = getPlayerById(playerId)
         assertPlayersTurn(player)
 
-        val piece = getPieceById(pieceId)
-        if (piece.owner != player) {
-            throw InvalidActionException("Piece not owned by player")
-        }
-
-        if (getWallByPosition(wallPosition) != null) {
+        if (getWallByPosition(wallPlacement.wallPosition) != null) {
             throw InvalidActionException("Wall position is already occupied")
         }
-
-        if (!piece.movement.canMoveTo(pieceDestination)) {
-            throw InvalidActionException("Piece can't move to this position")
-        }
-
-        if (!board.isInsideBoard(wallPosition)) {
+        if (!board.isInsideBoard(wallPlacement.wallPosition)) {
             throw InvalidActionException("Wall position is outside the board")
         }
 
-        piece.position = pieceDestination
-        board.walls.add(Wall(wallPosition))
+        if (pieceMovement != null) {
+            val piece = getPieceById(pieceMovement.pieceId)
+            if (piece.owner != player) {
+                throw InvalidActionException("Piece not owned by player")
+            }
+            if (!piece.movement.canMoveTo(pieceMovement.position)) {
+                throw InvalidActionException("Piece can't move to this position")
+            }
+            piece.position = pieceMovement.position
+        } else {
+            val hasLegalMoves = board.pieces
+                .filter { it.owner == player }
+                .any { it.movement.getPossibleDestinations().isNotEmpty() }
+            if (hasLegalMoves) {
+                throw InvalidActionException("Player has legal moves and must move a piece")
+            }
+        }
+
+        board.walls.add(Wall(wallPlacement.wallPosition))
         endTurn()
     }
 

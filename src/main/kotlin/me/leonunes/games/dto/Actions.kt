@@ -7,6 +7,8 @@ import me.leonunes.games.common.asId
 import me.leonunes.games.rooksandwalls.model.AddPieceAction
 import me.leonunes.games.rooksandwalls.model.GameAction
 import me.leonunes.games.rooksandwalls.model.MoveAction
+import me.leonunes.games.rooksandwalls.model.PieceMovement
+import me.leonunes.games.rooksandwalls.model.WallPlacement
 import me.leonunes.games.rooksandwalls.model.PlayerId
 import kotlin.reflect.full.memberProperties
 
@@ -37,6 +39,19 @@ data class AddPieceDTO(val position: SquareCoordinate) : ActionDTOBase {
 }
 
 @Serializable
-data class MoveActionDTO(val pieceId: Int, val position: SquareCoordinate, val wallPosition: EdgeCoordinate) : ActionDTOBase {
-    override fun toModel(player: PlayerId) = MoveAction(player, pieceId.asId(), position, wallPosition)
+data class PieceMovementDTO(val pieceId: Int, val position: SquareCoordinate)
+
+@Serializable
+data class WallPlacementDTO(val wallPosition: EdgeCoordinate)
+
+@Serializable
+data class MoveActionDTO(
+    val pieceMovement: PieceMovementDTO?,
+    val wallPlacement: WallPlacementDTO
+) : ActionDTOBase {
+    override fun toModel(player: PlayerId) = MoveAction(
+        player,
+        pieceMovement?.let { PieceMovement(it.pieceId.asId(), it.position) },
+        WallPlacement(wallPlacement.wallPosition)
+    )
 }
