@@ -58,6 +58,7 @@ class GameStateTest {
         every { game.pieces } returns pieces
         every { game.walls } returns walls
         every { game.deadPieces } returns deadPieces
+        every { game.getDisplayName(any()) } returns null
 
         val dto = game.getStateDto(player1.id)
         assertEquals(player1.id.get(), dto.playerId)
@@ -69,11 +70,11 @@ class GameStateTest {
         assertEquals(GameStage.PiecePlacement, dto.stage)
         assertEquals(player2.id.get(), dto.currentTurn)
         assertEquals(
-            players.map { PlayerDTO(it.id.get()) }.toSet(),
+            players.map { PlayerDTO(it.id.get(), "Guest") }.toSet(),
             dto.players.toSet()
         )
         assertEquals(
-            players.map { PlayerDTO(it.id.get()) }.toSet(),
+            players.map { PlayerDTO(it.id.get(), "Guest") }.toSet(),
             dto.remainingPlayers.toSet()
         )
         assertEquals(

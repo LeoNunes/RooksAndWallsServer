@@ -54,7 +54,12 @@ fun Application.configureGame() {
             } else {
                 UUID.randomUUID().toString()
             }
-            val playerIdResult = game.joinGame(playerId)
+            val displayName: String = if (token != null) {
+                AppDependencies.userRepository.getDisplayName(playerId) ?: "User"
+            } else {
+                "Guest"
+            }
+            val playerIdResult = game.joinGame(playerId, displayName)
             // TODO: Handle disconnect
 
             sendSerialized(game.getStateDto(playerIdResult))
