@@ -49,16 +49,12 @@ fun Application.configureUsers() {
             } catch (e: InvalidTokenException) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@get
-            }
-
-            val userData = try {
-                AppDependencies.userRepository.getUserData(authenticatedUser.id)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound)
                 return@get
             }
 
-            call.respond(UserProfileResponse(authenticatedUser.id, userData.displayName))
+            call.respond(UserProfileResponse(authenticatedUser.id, authenticatedUser.displayName))
         }
     }
 }
