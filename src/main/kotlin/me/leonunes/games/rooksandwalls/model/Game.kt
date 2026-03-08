@@ -39,7 +39,7 @@ interface Game {
     val deadPieces: List<Piece>
     val walls: List<Wall>
     suspend fun start(players: List<Player>)
-    suspend fun updateConnectionStatus(playerId: PlayerId, status: ConnectionStatus)
+    suspend fun notifyUpdates()
     suspend fun processAction(action: GameAction)
     fun createUpdatesChannel(): ReceiveChannel<GameUpdate>
 }
@@ -84,14 +84,6 @@ class GameImp private constructor(override val id: GameId, override val config: 
             _players.addAll(players)
             remainingPlayers = _players.toList()
             startPiecePlacementStage()
-            notifyUpdates()
-        }
-    }
-
-    override suspend fun updateConnectionStatus(playerId: PlayerId, status: ConnectionStatus) {
-        gameMutex.withLock {
-            val idx = _players.indexOfFirst { it.id == playerId }
-            if (idx >= 0) _players[idx] = _players[idx].copy(connectionStatus = status)
             notifyUpdates()
         }
     }
@@ -237,7 +229,7 @@ class GameImp private constructor(override val id: GameId, override val config: 
         return channel
     }
 
-    private suspend fun notifyUpdates() {
+    override suspend fun notifyUpdates() {
         updateChannels.forEach { it.send(GameUpdate()) }
         if (gameStage == GameStage.Completed) {
             updateChannels.forEach { it.close() }

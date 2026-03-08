@@ -28,7 +28,7 @@ class GameManager(val game: Game) {
         if (idx < 0) return
         _players[idx] = _players[idx].copy(connectionStatus = ConnectionStatus.Disconnected)
         if (game.gameStage != GameStage.WaitingForPlayers) {
-            game.updateConnectionStatus(playerId, ConnectionStatus.Disconnected)
+            game.notifyUpdates()
         }
     }
 
@@ -36,7 +36,7 @@ class GameManager(val game: Game) {
         val updated = _players[index].copy(connectionStatus = ConnectionStatus.Connected)
         _players[index] = updated
         if (game.gameStage != GameStage.WaitingForPlayers) {
-            game.updateConnectionStatus(updated.id, ConnectionStatus.Connected)
+            game.notifyUpdates()
         }
         return updated
     }

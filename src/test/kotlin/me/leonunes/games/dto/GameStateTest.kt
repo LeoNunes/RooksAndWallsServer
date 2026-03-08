@@ -61,7 +61,7 @@ class GameStateTest {
         every { game.walls } returns walls
         every { game.deadPieces } returns deadPieces
 
-        val dto = game.getStateDto(player1.id)
+        val dto = game.getStateDto(player1.id, players)
         assertEquals(player1.id.get(), dto.playerId)
         assertEquals(20, dto.gameId)
         assert(dto.config.numberOfPlayers == config.numberOfPlayers)

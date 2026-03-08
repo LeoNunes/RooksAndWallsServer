@@ -42,15 +42,16 @@ fun Piece.toDto(): PieceDTO = PieceDTO(id.get(), owner.id.get(), position)
 data class WallDTO(val position: EdgeCoordinate)
 fun Wall.toDto(): WallDTO = WallDTO(position)
 
-fun Game.getStateDto(playerId: PlayerId): GameStateDTO {
+fun Game.getStateDto(playerId: PlayerId, allPlayers: List<Player>): GameStateDTO {
+    val remainingPlayerIds = remainingPlayers.map { it.id }.toSet()
     return GameStateDTO(
         gameId = this.id.get(),
         config = config.toDto(),
         stage = gameStage,
         currentTurn = currentTurn?.id?.get(),
         playerId = playerId.get(),
-        players = players.map { it.toDto() },
-        remainingPlayers = remainingPlayers.map { it.toDto() },
+        players = allPlayers.map { it.toDto() },
+        remainingPlayers = allPlayers.filter { it.id in remainingPlayerIds }.map { it.toDto() },
         pieces = pieces.map { it.toDto() },
         walls = walls.map { it.toDto() },
         deadPieces = deadPieces.map { it.toDto() },

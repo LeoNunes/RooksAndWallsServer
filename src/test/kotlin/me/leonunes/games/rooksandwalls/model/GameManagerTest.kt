@@ -88,7 +88,7 @@ class GameManagerTest {
         repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUserImpl("user-$i")) }
         manager.disconnectPlayer("user-0".asId())
 
-        assertEquals(ConnectionStatus.Disconnected, game.players.find { it.id.get() == "user-0" }?.connectionStatus)
+        assertEquals(ConnectionStatus.Disconnected, manager.players.find { it.id.get() == "user-0" }?.connectionStatus)
     }
 
     @Test
