@@ -27,8 +27,8 @@ class GameStateTest {
         val game = mockk<Game>()
         val board = mockk<Board>()
         val config = GameConfigDefaultValues
-        val player1 = Player(0.asId())
-        val player2 = Player(1.asId())
+        val player1 = Player("player-0".asId())
+        val player2 = Player("player-1".asId())
         val players = listOf(player1, player2)
         val pieces = listOf(
             Piece(0.asId(), player1, coord(0, 0), board),
@@ -58,6 +58,7 @@ class GameStateTest {
         every { game.pieces } returns pieces
         every { game.walls } returns walls
         every { game.deadPieces } returns deadPieces
+        every { game.getDisplayName(any()) } returns null
 
         val dto = game.getStateDto(player1.id)
         assertEquals(player1.id.get(), dto.playerId)
@@ -69,11 +70,11 @@ class GameStateTest {
         assertEquals(GameStage.PiecePlacement, dto.stage)
         assertEquals(player2.id.get(), dto.currentTurn)
         assertEquals(
-            players.map { PlayerDTO(it.id.get()) }.toSet(),
+            players.map { PlayerDTO(it.id.get(), "Guest") }.toSet(),
             dto.players.toSet()
         )
         assertEquals(
-            players.map { PlayerDTO(it.id.get()) }.toSet(),
+            players.map { PlayerDTO(it.id.get(), "Guest") }.toSet(),
             dto.remainingPlayers.toSet()
         )
         assertEquals(

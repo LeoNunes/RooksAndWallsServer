@@ -26,7 +26,7 @@ class GameTest {
     @Test
     fun `player can join game`() = runBlocking {
         val game = GameFactory.createGame()
-        val playerId = game.joinGame()
+        val playerId = game.joinGame("player-test", "Guest")
 
         assertTrue(game.players.filter { it.id == playerId }.size == 1)
     }
@@ -35,7 +35,7 @@ class GameTest {
     fun `player cant join if game is full`() : Unit = runBlocking {
         with(createGameWithPlayers()) {
             assertFailsWith<GameFullException> {
-                joinGame()
+                joinGame("extra-player", "Guest")
             }
         }
     }
@@ -52,7 +52,7 @@ class GameTest {
         val channel1 = game.createUpdatesChannel()
         val channel2 = game.createUpdatesChannel()
 
-        game.joinGame()
+        game.joinGame("player-1", "Guest")
 
         assertTrue(channel1.receiveInstant() != null)
         assertTrue(channel2.receiveInstant() != null)
@@ -61,9 +61,9 @@ class GameTest {
     @Test
     fun `game starts after all players join`() = runBlocking {
         val game = GameFactory.createGame()
-        game.joinGame()
-        game.joinGame()
-        game.joinGame()
+        game.joinGame("player-1", "Guest")
+        game.joinGame("player-2", "Guest")
+        game.joinGame("player-3", "Guest")
 
         assertEquals(GameStage.PiecePlacement, game.gameStage)
     }
@@ -335,7 +335,7 @@ class GameTest {
     fun `game can be configured for other number of players`() : Unit = runBlocking {
         with(createGameWithPlayers(GameConfig(numberOfPlayers = 4))) {
             assertEquals(4, players.size)
-            assertFailsWith<GameFullException> { joinGame() }
+            assertFailsWith<GameFullException> { joinGame("extra-player", "Guest") }
         }
     }
 

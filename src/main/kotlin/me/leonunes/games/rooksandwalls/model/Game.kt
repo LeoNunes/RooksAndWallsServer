@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class GameUpdate
 
-typealias PlayerId = Id<Player, Int>
+typealias PlayerId = Id<Player, String>
 data class Player(val id: PlayerId)
 
 typealias GameId = Id<Game, Int>
@@ -28,7 +28,8 @@ interface Game {
     val pieces : List<Piece>
     val deadPieces: List<Piece>
     val walls : List<Wall>
-    suspend fun joinGame() : PlayerId
+    suspend fun joinGame(userId: String, displayName: String) : PlayerId
+    fun getDisplayName(playerId: PlayerId): String?
     suspend fun processAction(action: GameAction)
     fun createUpdatesChannel() : ReceiveChannel<GameUpdate>
 }
@@ -56,8 +57,8 @@ class GameImp private constructor(override val id: GameId, override val config: 
 
     override var remainingPlayers = listOf<Player>()
 
-    private var nextPlayerId = 0
     private var nextPieceId = 0
+    private val playerDisplayNames = mutableMapOf<PlayerId, String>()
 
     private val updateChannels: MutableList<SendChannel<GameUpdate>> = mutableListOf()
     private val gameMutex: Mutex = Mutex()
@@ -69,21 +70,21 @@ class GameImp private constructor(override val id: GameId, override val config: 
     private fun assertGameStage(gameStage: GameStage) = if (this.gameStage != gameStage) throw InvalidStageException() else Unit
     private fun assertPlayersTurn(player: Player) = if (currentTurn != player) throw NotPlayersTurnException() else Unit
 
-    override suspend fun joinGame(): PlayerId {
+    override suspend fun joinGame(userId: String, displayName: String): PlayerId {
         gameMutex.withLock {
-            if (players.size == config.numberOfPlayers) {
-                throw GameFullException()
-            }
+            if (players.size == config.numberOfPlayers) throw GameFullException()
+            if (players.any { it.id.get() == userId }) throw PlayerAlreadyJoinedException()
 
-            val player = Player(nextPlayerId++.asId())
+            val player = Player(userId.asId())
+            playerDisplayNames[player.id] = displayName
             _players.add(player)
-            if (players.size == config.numberOfPlayers) {
-                startGame()
-            }
+            if (players.size == config.numberOfPlayers) startGame()
             notifyUpdates()
             return player.id
         }
     }
+
+    override fun getDisplayName(playerId: PlayerId): String? = playerDisplayNames[playerId]
 
     private fun startGame() {
         remainingPlayers = players.toList()
