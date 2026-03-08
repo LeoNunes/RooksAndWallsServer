@@ -16,10 +16,9 @@ import me.leonunes.games.common.asId
 import me.leonunes.games.dto.ActionDTO
 import me.leonunes.games.dto.getStateDto
 import me.leonunes.games.rooksandwalls.model.GameConfig
-import me.leonunes.games.rooksandwalls.model.GameFactory
 import me.leonunes.games.rooksandwalls.model.GameId
-import me.leonunes.games.rooksandwalls.model.Player
-import java.util.*
+import me.leonunes.games.users.InvalidTokenException
+import me.leonunes.games.users.User
 
 const val apiPathPrefix = "/rw"
 
@@ -27,82 +26,85 @@ fun Application.configureGame() {
     routing {
         post<CreateGameRequest> {
             val body = runCatching { call.receive<CreateGameRequestBody>() }.getOrNull()
-
-            val game = if (body == null) GameFactory.createGame() else
-                GameFactory.createGame(GameConfig(body.numberOfPlayers, body.piecesPerPlayer, body.boardRows, body.boardColumns))
-
-            call.respond(CreateGameResponse(game.id.get()))
+            val config = body?.let {
+                GameConfig(it.numberOfPlayers, it.piecesPerPlayer, it.boardRows, it.boardColumns)
+            }
+            val manager = AppDependencies.gameManagerFactory.createGame(config)
+            call.respond(CreateGameResponse(manager.game.id.get()))
         }
 
         webSocket("$apiPathPrefix/game/{gameId}") {
-            val gameId : GameId? = call.parameters["gameId"]?.toIntOrNull()?.asId()
-            //val spectate = call.parameters["spectate"].toBoolean()
+            val user: User = resolveUser(call) ?: run {
+                close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
+                return@webSocket
+            }
 
-            val game = gameId?.let { GameFactory.getGameById(it) }
-            if (game == null) {
+            val gameId: GameId? = call.parameters["gameId"]?.toIntOrNull()?.asId()
+            val manager = gameId?.let { AppDependencies.gameManagerFactory.getManager(it) }
+            if (manager == null) {
                 close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Websocket closed due to nonexistent game"))
                 return@webSocket
             }
 
-            val token = call.parameters["token"]
-            val userId: String = if (token != null) {
-                val sub = AppDependencies.cognitoJwtValidator?.validate(token)
-                if (sub == null) {
-                    close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
-                    return@webSocket
-                }
-                sub
-            } else {
-                UUID.randomUUID().toString()
-            }
-            val displayName: String = if (token != null) {
-                AppDependencies.userRepository.getUserData(userId).displayName
-            } else {
-                "Guest"
-            }
-            game.joinGame(userId, displayName)
-            // TODO: Handle disconnect
-            val playerId = userId.asId<Player>()
+            val player = manager.joinGame(user)
+            val playerId = player.id
 
-            sendSerialized(game.getStateDto(playerId))
+            // TODO: In the future, make `manager.joinGame` automatically call `createUpdatesChannel` in the game
+            //  and return a `GameView` object (which is a view of the game from the perspective of a player)
+            sendSerialized(manager.game.getStateDto(playerId))
 
             launch {
-                val channel = game.createUpdatesChannel()
+                val channel = manager.game.createUpdatesChannel()
                 try {
                     for (update in channel) {
-                        sendSerialized(game.getStateDto(playerId))
+                        sendSerialized(manager.game.getStateDto(playerId))
                     }
-                }
-                finally {
+                } finally {
                     channel.cancel()
                 }
             }
 
-            launch {
-                while (isActive) {
-                    try {
-                        val dto = receiveDeserialized<ActionDTO>()
-                        game.processAction(dto.getAction(playerId))
+            try {
+                launch {
+                    while (isActive) {
+                        try {
+                            val dto = receiveDeserialized<ActionDTO>()
+                            manager.game.processAction(dto.getAction(playerId))
+                        } catch (e: Exception) {
+                            send("Error while executing action: ${e.javaClass.name} ${e.message}")
+                        }
                     }
-                    // TODO: Handle fails properly
-                    catch (e: Exception) {
-                        send("Error while execution action: ${e.javaClass.name} ${e.message}")
-                    }
-                }
-            }.join()
+                }.join()
+            } finally {
+                // TODO: Find a way to keep track of the connections so that, if player connects on a new WS,
+                //  the previous one is closed and only the new one is kept open. And player status is not
+                //  changed to disconnected
+                manager.disconnectPlayer(playerId)
+            }
         }
+    }
+}
+
+private fun resolveUser(call: ApplicationCall): User? {
+    val token = call.parameters["token"] ?: return AppDependencies.userService.getGuestUser()
+    return try {
+        AppDependencies.userService.getAuthenticatedUser(token)
+    } catch (e: InvalidTokenException) {
+        null
     }
 }
 
 @Serializable
 @Resource("$apiPathPrefix/game/")
 class CreateGameRequest
+
 @Serializable
 class CreateGameRequestBody(
     val numberOfPlayers: Int? = null,
     val piecesPerPlayer: Int? = null,
     val boardRows: Int? = null,
-    val boardColumns: Int? = null,
-    /*val users: List<String>? = null*/) // this list will be for when there is authentication and a game is created for specific users
+    val boardColumns: Int? = null
+)
+
 @Serializable
 class CreateGameResponse(val gameId: Int)

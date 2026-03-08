@@ -7,13 +7,8 @@ import io.mockk.mockk
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.asId
 import me.leonunes.games.common.coord
-import me.leonunes.games.rooksandwalls.model.Board
-import me.leonunes.games.rooksandwalls.model.Game
-import me.leonunes.games.rooksandwalls.model.GameConfigDefaultValues
-import me.leonunes.games.rooksandwalls.model.GameStage
-import me.leonunes.games.rooksandwalls.model.Piece
-import me.leonunes.games.rooksandwalls.model.Player
-import me.leonunes.games.rooksandwalls.model.Wall
+import me.leonunes.games.rooksandwalls.model.*
+import me.leonunes.games.users.GuestUserImpl
 import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,8 +22,8 @@ class GameStateTest {
         val game = mockk<Game>()
         val board = mockk<Board>()
         val config = GameConfigDefaultValues
-        val player1 = Player("player-0".asId())
-        val player2 = Player("player-1".asId())
+        val player1 = Player(GuestUserImpl("player-0"))
+        val player2 = Player(GuestUserImpl("player-1"))
         val players = listOf(player1, player2)
         val pieces = listOf(
             Piece(0.asId(), player1, coord(0, 0), board),
@@ -58,7 +53,6 @@ class GameStateTest {
         every { game.pieces } returns pieces
         every { game.walls } returns walls
         every { game.deadPieces } returns deadPieces
-        every { game.getDisplayName(any()) } returns null
 
         val dto = game.getStateDto(player1.id)
         assertEquals(player1.id.get(), dto.playerId)
@@ -70,11 +64,11 @@ class GameStateTest {
         assertEquals(GameStage.PiecePlacement, dto.stage)
         assertEquals(player2.id.get(), dto.currentTurn)
         assertEquals(
-            players.map { PlayerDTO(it.id.get(), "Guest") }.toSet(),
+            players.map { PlayerDTO(it.id.get(), "Guest", ConnectionStatus.Connected) }.toSet(),
             dto.players.toSet()
         )
         assertEquals(
-            players.map { PlayerDTO(it.id.get(), "Guest") }.toSet(),
+            players.map { PlayerDTO(it.id.get(), "Guest", ConnectionStatus.Connected) }.toSet(),
             dto.remainingPlayers.toSet()
         )
         assertEquals(

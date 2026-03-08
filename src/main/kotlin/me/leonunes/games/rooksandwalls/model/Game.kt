@@ -14,24 +14,20 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class GameUpdate
 
-typealias PlayerId = Id<Player, String>
-data class Player(val id: PlayerId)
-
 typealias GameId = Id<Game, Int>
 interface Game {
     val id: GameId
     val config: GameConfig
     val gameStage: GameStage
     val currentTurn: Player?
-    val players : List<Player>
+    val players: List<Player>
     val remainingPlayers: List<Player>
-    val pieces : List<Piece>
+    val pieces: List<Piece>
     val deadPieces: List<Piece>
-    val walls : List<Wall>
-    suspend fun joinGame(userId: String, displayName: String) : PlayerId
-    fun getDisplayName(playerId: PlayerId): String?
+    val walls: List<Wall>
+    suspend fun start(players: List<Player>)
     suspend fun processAction(action: GameAction)
-    fun createUpdatesChannel() : ReceiveChannel<GameUpdate>
+    fun createUpdatesChannel(): ReceiveChannel<GameUpdate>
 }
 
 class GameImp private constructor(override val id: GameId, override val config: GameConfig) : Game {
@@ -58,7 +54,6 @@ class GameImp private constructor(override val id: GameId, override val config: 
     override var remainingPlayers = listOf<Player>()
 
     private var nextPieceId = 0
-    private val playerDisplayNames = mutableMapOf<PlayerId, String>()
 
     private val updateChannels: MutableList<SendChannel<GameUpdate>> = mutableListOf()
     private val gameMutex: Mutex = Mutex()
@@ -70,25 +65,13 @@ class GameImp private constructor(override val id: GameId, override val config: 
     private fun assertGameStage(gameStage: GameStage) = if (this.gameStage != gameStage) throw InvalidStageException() else Unit
     private fun assertPlayersTurn(player: Player) = if (currentTurn != player) throw NotPlayersTurnException() else Unit
 
-    override suspend fun joinGame(userId: String, displayName: String): PlayerId {
+    override suspend fun start(players: List<Player>) {
         gameMutex.withLock {
-            if (players.size == config.numberOfPlayers) throw GameFullException()
-            if (players.any { it.id.get() == userId }) throw PlayerAlreadyJoinedException()
-
-            val player = Player(userId.asId())
-            playerDisplayNames[player.id] = displayName
-            _players.add(player)
-            if (players.size == config.numberOfPlayers) startGame()
+            _players.addAll(players)
+            remainingPlayers = _players.toList()
+            startPiecePlacementStage()
             notifyUpdates()
-            return player.id
         }
-    }
-
-    override fun getDisplayName(playerId: PlayerId): String? = playerDisplayNames[playerId]
-
-    private fun startGame() {
-        remainingPlayers = players.toList()
-        startPiecePlacementStage()
     }
 
     private fun startPiecePlacementStage() {
@@ -257,6 +240,7 @@ class GameImp private constructor(override val id: GameId, override val config: 
 
 @Serializable
 enum class GameStage {
+    // TODO: Rename to "not_started"
     @SerialName("waiting_for_players")
     WaitingForPlayers,
     @SerialName("piece_placement")

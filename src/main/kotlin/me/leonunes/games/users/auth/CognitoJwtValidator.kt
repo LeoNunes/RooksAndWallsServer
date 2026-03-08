@@ -1,4 +1,4 @@
-package me.leonunes.games.auth
+package me.leonunes.games.users.auth
 
 import com.auth0.jwk.JwkProviderBuilder
 import com.auth0.jwt.JWT
