@@ -8,7 +8,7 @@ import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.coord
 import me.leonunes.games.common.edgeDown
 import me.leonunes.games.common.edgeUp
-import me.leonunes.games.users.GuestUser
+import me.leonunes.games.users.GuestUserImpl
 import org.junit.Rule
 import kotlin.test.*
 
@@ -27,8 +27,8 @@ class GameTest {
     @Test
     fun `player can join game`() = runBlocking {
         val game = GameFactory.createGame()
-        val player = Player(GuestUser("player-test"))
-        game.start(listOf(player) + (1 until game.config.numberOfPlayers).map { Player(GuestUser("player-$it")) })
+        val player = Player(GuestUserImpl("player-test"))
+        game.start(listOf(player) + (1 until game.config.numberOfPlayers).map { Player(GuestUserImpl("player-$it")) })
 
         assertTrue(game.players.any { it.id.get() == "player-test" })
     }
@@ -39,7 +39,7 @@ class GameTest {
         val channel1 = game.createUpdatesChannel()
         val channel2 = game.createUpdatesChannel()
 
-        val players = (0 until game.config.numberOfPlayers).map { Player(GuestUser("player-$it")) }
+        val players = (0 until game.config.numberOfPlayers).map { Player(GuestUserImpl("player-$it")) }
         game.start(players)
 
         assertTrue(channel1.receiveInstant() != null)
@@ -49,7 +49,7 @@ class GameTest {
     @Test
     fun `game starts after start() is called with all players`() = runBlocking {
         val game = GameFactory.createGame()
-        val players = (0 until game.config.numberOfPlayers).map { Player(GuestUser("player-$it")) }
+        val players = (0 until game.config.numberOfPlayers).map { Player(GuestUserImpl("player-$it")) }
         game.start(players)
 
         assertEquals(GameStage.PiecePlacement, game.gameStage)

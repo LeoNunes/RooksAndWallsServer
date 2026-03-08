@@ -5,11 +5,11 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.runBlocking
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.coord
-import me.leonunes.games.users.GuestUser
+import me.leonunes.games.users.GuestUserImpl
 
 fun createGameWithPlayers(config: GameConfig = GameConfigDefaultValues): Game = runBlocking {
     val game = GameFactory.createGame(config)
-    val players = (0 until config.numberOfPlayers).map { Player(GuestUser("player-$it")) }
+    val players = (0 until config.numberOfPlayers).map { Player(GuestUserImpl("player-$it")) }
     game.start(players)
     game
 }

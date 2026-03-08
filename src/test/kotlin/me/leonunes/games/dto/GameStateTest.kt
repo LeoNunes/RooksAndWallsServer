@@ -15,7 +15,7 @@ import me.leonunes.games.rooksandwalls.model.GameStage
 import me.leonunes.games.rooksandwalls.model.Piece
 import me.leonunes.games.rooksandwalls.model.Player
 import me.leonunes.games.rooksandwalls.model.Wall
-import me.leonunes.games.users.GuestUser
+import me.leonunes.games.users.GuestUserImpl
 import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -29,8 +29,8 @@ class GameStateTest {
         val game = mockk<Game>()
         val board = mockk<Board>()
         val config = GameConfigDefaultValues
-        val player1 = Player(GuestUser("player-0"))
-        val player2 = Player(GuestUser("player-1"))
+        val player1 = Player(GuestUserImpl("player-0"))
+        val player2 = Player(GuestUserImpl("player-1"))
         val players = listOf(player1, player2)
         val pieces = listOf(
             Piece(0.asId(), player1, coord(0, 0), board),

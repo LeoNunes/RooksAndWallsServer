@@ -5,14 +5,21 @@ sealed interface User {
     val displayName: String
 }
 
-data class GuestUser(
+interface GuestUser : User
+interface RegisteredUser : User
+interface AuthenticatedUser : RegisteredUser
+
+data class GuestUserImpl(
     override val id: String,
     override val displayName: String = "Guest"
-) : User
+) : GuestUser
 
-abstract class RegisteredUser : User
-
-data class AuthenticatedUser(
+data class RegisteredUserImpl(
     override val id: String,
     override val displayName: String
-) : RegisteredUser()
+) : RegisteredUser
+
+data class AuthenticatedUserImpl(
+    override val id: String,
+    override val displayName: String
+) : AuthenticatedUser

@@ -3,7 +3,7 @@ package me.leonunes.games.rooksandwalls.model
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import me.leonunes.games.common.asId
-import me.leonunes.games.users.GuestUser
+import me.leonunes.games.users.GuestUserImpl
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -16,7 +16,7 @@ class GameManagerTest {
     fun `joinGame creates player with Connected status`() = runBlocking {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
-        val user = GuestUser("user-1")
+        val user = GuestUserImpl("user-1")
 
         val player = manager.joinGame(user)
 
@@ -29,7 +29,7 @@ class GameManagerTest {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
 
-        manager.joinGame(GuestUser("user-1"))
+        manager.joinGame(GuestUserImpl("user-1"))
 
         assertEquals(1, manager.players.size)
     }
@@ -39,7 +39,7 @@ class GameManagerTest {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
 
-        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUser("user-$i")) }
+        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUserImpl("user-$i")) }
 
         assertEquals(GameStage.PiecePlacement, game.gameStage)
     }
@@ -49,7 +49,7 @@ class GameManagerTest {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
 
-        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUser("user-$i")) }
+        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUserImpl("user-$i")) }
 
         assertEquals(game.config.numberOfPlayers, game.players.size)
     }
@@ -59,10 +59,10 @@ class GameManagerTest {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
 
-        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUser("user-$i")) }
+        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUserImpl("user-$i")) }
 
         assertFailsWith<GameFullException> {
-            manager.joinGame(GuestUser("extra-user"))
+            manager.joinGame(GuestUserImpl("extra-user"))
         }
     }
 
@@ -70,7 +70,7 @@ class GameManagerTest {
     fun `joinGame reconnects existing player and returns Connected status`() = runBlocking {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
-        val user = GuestUser("user-1")
+        val user = GuestUserImpl("user-1")
 
         manager.joinGame(user)
         manager.disconnectPlayer("user-1".asId())
@@ -85,7 +85,7 @@ class GameManagerTest {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
 
-        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUser("user-$i")) }
+        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUserImpl("user-$i")) }
         manager.disconnectPlayer("user-0".asId())
 
         assertEquals(ConnectionStatus.Disconnected, game.players.find { it.id.get() == "user-0" }?.connectionStatus)
@@ -96,7 +96,7 @@ class GameManagerTest {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
 
-        manager.joinGame(GuestUser("user-1"))
+        manager.joinGame(GuestUserImpl("user-1"))
         manager.disconnectPlayer("user-1".asId())  // game not started yet — should not throw
 
         assertEquals(ConnectionStatus.Disconnected, manager.players[0].connectionStatus)
@@ -107,7 +107,7 @@ class GameManagerTest {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
 
-        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUser("user-$i")) }
+        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUserImpl("user-$i")) }
 
         val channel = game.createUpdatesChannel()
         manager.disconnectPlayer("user-0".asId())

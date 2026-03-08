@@ -8,17 +8,17 @@ class UserService(
     private val jwtValidator: CognitoJwtValidator?
 ) {
     fun getGuestUser(): GuestUser {
-        return GuestUser(id = UUID.randomUUID().toString())
+        return GuestUserImpl(id = UUID.randomUUID().toString())
     }
 
     fun getAuthenticatedUser(token: String): AuthenticatedUser {
         val sub = jwtValidator?.validate(token) ?: throw InvalidTokenException()
         val userData = repository.getUserData(sub)
-        return AuthenticatedUser(id = sub, displayName = userData.displayName)
+        return AuthenticatedUserImpl(id = sub, displayName = userData.displayName)
     }
 
     fun getRegisteredUser(userId: String): RegisteredUser {
         val userData = repository.getUserData(userId)
-        return AuthenticatedUser(id = userId, displayName = userData.displayName)
+        return RegisteredUserImpl(id = userId, displayName = userData.displayName)
     }
 }
