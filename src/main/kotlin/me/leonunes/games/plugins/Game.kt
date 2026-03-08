@@ -34,15 +34,15 @@ fun Application.configureGame() {
         }
 
         webSocket("$apiPathPrefix/game/{gameId}") {
+            val user: User = resolveUser(call) ?: run {
+                close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
+                return@webSocket
+            }
+
             val gameId: GameId? = call.parameters["gameId"]?.toIntOrNull()?.asId()
             val manager = gameId?.let { AppDependencies.gameManagerFactory.getManager(it) }
             if (manager == null) {
                 close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Websocket closed due to nonexistent game"))
-                return@webSocket
-            }
-
-            val user: User = resolveUser(call) ?: run {
-                close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
                 return@webSocket
             }
 
