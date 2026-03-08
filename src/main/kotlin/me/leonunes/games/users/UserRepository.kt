@@ -17,29 +17,36 @@ class UserRepository(
     private val tableName: String
 ) {
     fun createUser(userId: String, displayName: String, createdAt: String): CreateUserResult {
-        // Check global uniqueness via the displayName-index GSI before writing.
-        // Note: this query-then-write has a small race-condition window; see design-fix doc.
-        val existing = dynamoDb.query(QueryRequest.builder()
-            .tableName(tableName)
-            .indexName("displayName-index")
-            .keyConditionExpression("displayName = :dn")
-            .expressionAttributeValues(mapOf(":dn" to av(displayName)))
-            .limit(1)
-            .build())
-        if (existing.count() > 0) return CreateUserResult.DisplayNameTaken
-
         return try {
-            dynamoDb.putItem(PutItemRequest.builder()
-                .tableName(tableName)
-                .item(mapOf(
-                    "userId"      to av(userId),
-                    "displayName" to av(displayName),
-                    "createdAt"   to av(createdAt),
-                ))
-                .conditionExpression("attribute_not_exists(userId)")
+            dynamoDb.transactWriteItems(TransactWriteItemsRequest.builder()
+                .transactItems(
+                    // Reserve the display name atomically; fails if already taken
+                    TransactWriteItem.builder()
+                        .put(Put.builder()
+                            .tableName(tableName)
+                            .item(mapOf(
+                                "userId"      to av("DISPLAYNAME#$displayName"),
+                                "displayName" to av(displayName),
+                            ))
+                            .conditionExpression("attribute_not_exists(userId)")
+                            .build())
+                        .build(),
+                    // Write the user record; fails if userId already exists
+                    TransactWriteItem.builder()
+                        .put(Put.builder()
+                            .tableName(tableName)
+                            .item(mapOf(
+                                "userId"      to av(userId),
+                                "displayName" to av(displayName),
+                                "createdAt"   to av(createdAt),
+                            ))
+                            .conditionExpression("attribute_not_exists(userId)")
+                            .build())
+                        .build()
+                )
                 .build())
             CreateUserResult.Success
-        } catch (e: ConditionalCheckFailedException) {
+        } catch (e: TransactionCanceledException) {
             CreateUserResult.DisplayNameTaken
         }
     }

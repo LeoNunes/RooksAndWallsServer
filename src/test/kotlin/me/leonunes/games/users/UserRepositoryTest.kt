@@ -15,32 +15,33 @@ class UserRepositoryTest {
 
     @Test
     fun `createUser returns success when displayName is unique`() {
-        every { dynamoDb.query(any<QueryRequest>()) } returns QueryResponse.builder()
-            .items(emptyList())
-            .count(0)
-            .build()
-        every { dynamoDb.putItem(any<PutItemRequest>()) } returns PutItemResponse.builder().build()
+        every { dynamoDb.transactWriteItems(any<TransactWriteItemsRequest>()) } returns
+            TransactWriteItemsResponse.builder().build()
 
         val result = repo.createUser("user-123", "Alice", "2026-01-01T00:00:00Z")
 
         assertTrue(result is CreateUserResult.Success)
-        verify { dynamoDb.putItem(match<PutItemRequest> {
-            it.item()["userId"]?.s() == "user-123" &&
-            it.item()["displayName"]?.s() == "Alice"
+        verify { dynamoDb.transactWriteItems(match<TransactWriteItemsRequest> { req ->
+            val items = req.transactItems()
+            items.size == 2 &&
+            items[0].put().item()["userId"]?.s() == "DISPLAYNAME#Alice" &&
+            items[1].put().item()["userId"]?.s() == "user-123" &&
+            items[1].put().item()["displayName"]?.s() == "Alice"
         }) }
     }
 
     @Test
-    fun `createUser returns DisplayNameTaken when displayName is already taken`() {
-        every { dynamoDb.query(any<QueryRequest>()) } returns QueryResponse.builder()
-            .items(listOf(mapOf("displayName" to AttributeValue.builder().s("Alice").build())))
-            .count(1)
-            .build()
+    fun `createUser returns DisplayNameTaken when transaction is cancelled`() {
+        every { dynamoDb.transactWriteItems(any<TransactWriteItemsRequest>()) } throws
+            TransactionCanceledException.builder()
+                .cancellationReasons(
+                    CancellationReason.builder().code("ConditionalCheckFailed").build()
+                )
+                .build()
 
         val result = repo.createUser("user-456", "Alice", "2026-01-01T00:00:00Z")
 
         assertTrue(result is CreateUserResult.DisplayNameTaken)
-        verify(exactly = 0) { dynamoDb.putItem(any<PutItemRequest>()) }
     }
 
     @Test
