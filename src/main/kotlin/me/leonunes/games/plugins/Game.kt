@@ -76,6 +76,9 @@ fun Application.configureGame() {
                     }
                 }.join()
             } finally {
+                // TODO: Find a way to keep track of the connections so that, if player connects on a new WS,
+                //  the previous one is closed and only the new one is kept open. And player status is not
+                //  changed to disconnected
                 manager.disconnectPlayer(playerId)
             }
         }
