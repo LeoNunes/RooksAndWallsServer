@@ -1,10 +1,12 @@
 package me.leonunes.games.plugins
 
 import io.ktor.http.*
+import io.ktor.resources.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
+import io.ktor.server.resources.*
 import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.routing.routing
 import kotlinx.serialization.Serializable
 import me.leonunes.games.AppDependencies
 import me.leonunes.games.auth.CognitoJwtValidator
@@ -13,23 +15,23 @@ import java.time.Instant
 
 fun Application.configureUsers() {
     routing {
-        post("/rw/users") {
+        post<CreateUserRequest> {
             val userId = extractUserIdFromBearer(call, AppDependencies.cognitoJwtValidator)
                 ?: run { call.respond(HttpStatusCode.Unauthorized); return@post }
 
-            val body = call.receive<CreateUserRequest>()
+            val body = call.receive<CreateUserRequestBody>()
             if (body.displayName.isBlank() || body.displayName.length > 30) {
                 call.respond(HttpStatusCode.BadRequest, "Invalid display name")
                 return@post
             }
 
             when (AppDependencies.userRepository.createUser(userId, body.displayName, Instant.now().toString())) {
-                is CreateUserResult.Success -> call.respond(HttpStatusCode.Created)
+                is CreateUserResult.Success -> call.respond(HttpStatusCode.Created, UserProfileResponse(userId, body.displayName))
                 is CreateUserResult.DisplayNameTaken -> call.respond(HttpStatusCode.Conflict, "Display name taken")
             }
         }
 
-        get("/rw/users/me") {
+        get<GetUserMeRequest> {
             val userId = extractUserIdFromBearer(call, AppDependencies.cognitoJwtValidator)
                 ?: run { call.respond(HttpStatusCode.Unauthorized); return@get }
 
@@ -51,5 +53,7 @@ private suspend fun extractUserIdFromBearer(call: ApplicationCall, validator: Co
     return validator?.validate(token)
 }
 
-@Serializable data class CreateUserRequest(val displayName: String)
+@Serializable @Resource("/rw/users") class CreateUserRequest
+@Serializable @Resource("/rw/users/me") class GetUserMeRequest
+@Serializable data class CreateUserRequestBody(val displayName: String)
 @Serializable data class UserProfileResponse(val userId: String, val displayName: String)

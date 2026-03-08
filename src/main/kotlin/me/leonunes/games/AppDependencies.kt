@@ -9,7 +9,8 @@ object AppDependencies {
     val userRepository: UserRepository by lazy {
         val tableName = System.getenv("GAMES_USERS_TABLE_NAME")
             ?: error("GAMES_USERS_TABLE_NAME not set")
-        val region = System.getenv("GAMES_COGNITO_REGION") ?: "us-west-2"
+        val region = System.getenv("GAMES_COGNITO_REGION")
+            ?: error("GAMES_COGNITO_REGION not set")
         val dynamoDb = DynamoDbClient.builder()
             .region(Region.of(region))
             .build()
@@ -18,7 +19,8 @@ object AppDependencies {
 
     val cognitoJwtValidator: CognitoJwtValidator? by lazy {
         val userPoolId = System.getenv("GAMES_COGNITO_USER_POOL_ID") ?: return@lazy null
-        val region = System.getenv("GAMES_COGNITO_REGION") ?: "us-west-2"
+        val region = System.getenv("GAMES_COGNITO_REGION")
+            ?: error("GAMES_COGNITO_REGION not set")
         CognitoJwtValidator(region, userPoolId)
     }
 }

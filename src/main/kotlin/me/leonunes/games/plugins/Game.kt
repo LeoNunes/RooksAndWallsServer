@@ -18,6 +18,7 @@ import me.leonunes.games.dto.getStateDto
 import me.leonunes.games.rooksandwalls.model.GameConfig
 import me.leonunes.games.rooksandwalls.model.GameFactory
 import me.leonunes.games.rooksandwalls.model.GameId
+import me.leonunes.games.rooksandwalls.model.Player
 import java.util.*
 
 const val apiPathPrefix = "/rw"
@@ -59,16 +60,17 @@ fun Application.configureGame() {
             } else {
                 "Guest"
             }
-            val playerIdResult = game.joinGame(userId, displayName)
+            game.joinGame(userId, displayName)
             // TODO: Handle disconnect
+            val playerId = userId.asId<Player>()
 
-            sendSerialized(game.getStateDto(playerIdResult))
+            sendSerialized(game.getStateDto(playerId))
 
             launch {
                 val channel = game.createUpdatesChannel()
                 try {
                     for (update in channel) {
-                        sendSerialized(game.getStateDto(playerIdResult))
+                        sendSerialized(game.getStateDto(playerId))
                     }
                 }
                 finally {
@@ -80,7 +82,7 @@ fun Application.configureGame() {
                 while (isActive) {
                     try {
                         val dto = receiveDeserialized<ActionDTO>()
-                        game.processAction(dto.getAction(playerIdResult))
+                        game.processAction(dto.getAction(playerId))
                     }
                     // TODO: Handle fails properly
                     catch (e: Exception) {

@@ -9,7 +9,7 @@ import me.leonunes.games.common.coord
 fun createGameWithPlayers(config: GameConfig = GameConfigDefaultValues) : Game = runBlocking {
     GameFactory.createGame(config).apply {
         (0 until config.numberOfPlayers).forEach {
-            joinGame("player-$it")
+            joinGame("player-$it", "Guest")
         }
     }
 }
