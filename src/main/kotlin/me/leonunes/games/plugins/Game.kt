@@ -49,6 +49,8 @@ fun Application.configureGame() {
             val player = manager.joinGame(user)
             val playerId = player.id
 
+            // TODO: In the future, make `manager.joinGame` automatically call `createUpdatesChannel` in the game
+            //  and return a `GameView` object (which is a view of the game from the perspective of a player)
             sendSerialized(manager.game.getStateDto(playerId))
 
             launch {
