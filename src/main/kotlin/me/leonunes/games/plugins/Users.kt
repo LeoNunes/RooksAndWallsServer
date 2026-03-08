@@ -42,17 +42,20 @@ fun Application.configureUsers() {
         get<GetUserMeRequest> {
             val authenticatedUser = try {
                 val token = extractBearerToken(call) ?: run {
-                    call.respond(HttpStatusCode.Unauthorized); return@get
+                    call.respond(HttpStatusCode.Unauthorized)
+                    return@get
                 }
                 AppDependencies.userService.getAuthenticatedUser(token)
             } catch (e: InvalidTokenException) {
-                call.respond(HttpStatusCode.Unauthorized); return@get
+                call.respond(HttpStatusCode.Unauthorized)
+                return@get
             }
 
             val userData = try {
                 AppDependencies.userRepository.getUserData(authenticatedUser.id)
             } catch (e: Exception) {
-                call.respond(HttpStatusCode.NotFound); return@get
+                call.respond(HttpStatusCode.NotFound)
+                return@get
             }
 
             call.respond(UserProfileResponse(authenticatedUser.id, userData.displayName))
