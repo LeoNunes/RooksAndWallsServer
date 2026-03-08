@@ -1,6 +1,6 @@
 package me.leonunes.games
 
-import me.leonunes.games.auth.CognitoJwtValidator
+import me.leonunes.games.users.auth.CognitoJwtValidator
 import me.leonunes.games.users.UserRepository
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient

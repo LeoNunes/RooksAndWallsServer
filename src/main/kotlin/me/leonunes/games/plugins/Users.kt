@@ -9,7 +9,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.routing
 import kotlinx.serialization.Serializable
 import me.leonunes.games.AppDependencies
-import me.leonunes.games.auth.CognitoJwtValidator
+import me.leonunes.games.users.auth.CognitoJwtValidator
 import me.leonunes.games.users.CreateUserResult
 import java.time.Instant
 
