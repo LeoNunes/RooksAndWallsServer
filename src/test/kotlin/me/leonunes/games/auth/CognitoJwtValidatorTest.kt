@@ -7,7 +7,7 @@ import java.util.Date
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class JwtValidatorTest {
+class CognitoJwtValidatorTest {
     // For tests we use a simple HMAC validator stub (real validator uses JWKS)
     // These tests focus on claim extraction logic
     @Test

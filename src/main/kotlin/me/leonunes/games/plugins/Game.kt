@@ -11,14 +11,14 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import me.leonunes.games.AppDependencies
 import me.leonunes.games.common.asId
 import me.leonunes.games.dto.ActionDTO
 import me.leonunes.games.dto.getStateDto
-import me.leonunes.games.AppDependencies
 import me.leonunes.games.rooksandwalls.model.GameConfig
 import me.leonunes.games.rooksandwalls.model.GameFactory
 import me.leonunes.games.rooksandwalls.model.GameId
-import java.util.UUID
+import java.util.*
 
 const val apiPathPrefix = "/rw"
 
@@ -45,7 +45,7 @@ fun Application.configureGame() {
 
             val token = call.parameters["token"]
             val playerId: String = if (token != null) {
-                val sub = AppDependencies.jwtValidator?.validate(token)
+                val sub = AppDependencies.cognitoJwtValidator?.validate(token)
                 if (sub == null) {
                     close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
                     return@webSocket
@@ -55,7 +55,7 @@ fun Application.configureGame() {
                 UUID.randomUUID().toString()
             }
             val displayName: String = if (token != null) {
-                AppDependencies.userRepository.getDisplayName(playerId) ?: "User"
+                runCatching { AppDependencies.userRepository.getUserData(playerId).displayName }.getOrDefault("User")
             } else {
                 "Guest"
             }

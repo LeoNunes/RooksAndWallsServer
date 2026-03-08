@@ -9,7 +9,7 @@ import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.util.concurrent.TimeUnit
 
-class JwtValidator(region: String, userPoolId: String) {
+class CognitoJwtValidator(region: String, userPoolId: String) {
     private val issuer = "https://cognito-idp.$region.amazonaws.com/$userPoolId"
     private val jwkProvider = JwkProviderBuilder(URL("$issuer/.well-known/jwks.json"))
         .cached(10, 24, TimeUnit.HOURS)

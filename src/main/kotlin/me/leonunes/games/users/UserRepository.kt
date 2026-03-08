@@ -8,6 +8,10 @@ sealed interface CreateUserResult {
     object DisplayNameTaken : CreateUserResult
 }
 
+interface UserData {
+    val displayName: String
+}
+
 class UserRepository(
     private val dynamoDb: DynamoDbClient,
     private val tableName: String
@@ -40,13 +44,18 @@ class UserRepository(
         }
     }
 
-    fun getDisplayName(userId: String): String? {
+    fun getUserData(userId: String): UserData {
         val response = dynamoDb.getItem(GetItemRequest.builder()
             .tableName(tableName)
             .key(mapOf("userId" to av(userId)))
             .projectionExpression("displayName")
             .build())
-        return response.item()["displayName"]?.s()
+
+        val displayName = response.item()["displayName"] ?: throw Exception("Invalid user data: Missing displayName")
+
+        return object : UserData {
+            override val displayName = displayName.s()
+        }
     }
 
     private fun av(s: String) = AttributeValue.builder().s(s).build()

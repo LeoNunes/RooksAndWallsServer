@@ -7,14 +7,14 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import me.leonunes.games.AppDependencies
-import me.leonunes.games.auth.JwtValidator
+import me.leonunes.games.auth.CognitoJwtValidator
 import me.leonunes.games.users.CreateUserResult
 import java.time.Instant
 
 fun Application.configureUsers() {
     routing {
         post("/rw/users") {
-            val userId = extractUserIdFromBearer(call, AppDependencies.jwtValidator)
+            val userId = extractUserIdFromBearer(call, AppDependencies.cognitoJwtValidator)
                 ?: run { call.respond(HttpStatusCode.Unauthorized); return@post }
 
             val body = call.receive<CreateUserRequest>()
@@ -30,18 +30,21 @@ fun Application.configureUsers() {
         }
 
         get("/rw/users/me") {
-            val userId = extractUserIdFromBearer(call, AppDependencies.jwtValidator)
+            val userId = extractUserIdFromBearer(call, AppDependencies.cognitoJwtValidator)
                 ?: run { call.respond(HttpStatusCode.Unauthorized); return@get }
 
-            val displayName = AppDependencies.userRepository.getDisplayName(userId)
-                ?: run { call.respond(HttpStatusCode.NotFound); return@get }
+            val userData = try {
+                AppDependencies.userRepository.getUserData(userId)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound); return@get
+            }
 
-            call.respond(UserProfileResponse(userId, displayName))
+            call.respond(UserProfileResponse(userId, userData.displayName))
         }
     }
 }
 
-private suspend fun extractUserIdFromBearer(call: ApplicationCall, validator: JwtValidator?): String? {
+private suspend fun extractUserIdFromBearer(call: ApplicationCall, validator: CognitoJwtValidator?): String? {
     val authHeader = call.request.header("Authorization") ?: return null
     if (!authHeader.startsWith("Bearer ")) return null
     val token = authHeader.removePrefix("Bearer ")

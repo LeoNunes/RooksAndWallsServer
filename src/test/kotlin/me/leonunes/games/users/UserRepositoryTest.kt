@@ -4,8 +4,8 @@ import io.mockk.*
 import org.junit.Test
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.*
+import kotlin.test.assertFailsWith
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class UserRepositoryTest {
@@ -44,21 +44,21 @@ class UserRepositoryTest {
     }
 
     @Test
-    fun `getDisplayName returns name for existing user`() {
+    fun `getUserData returns userData for existing user`() {
         every { dynamoDb.getItem(any<GetItemRequest>()) } returns GetItemResponse.builder()
             .item(mapOf(
                 "userId" to AttributeValue.builder().s("user-123").build(),
                 "displayName" to AttributeValue.builder().s("Alice").build()
             )).build()
 
-        assertEquals("Alice", repo.getDisplayName("user-123"))
+        assertEquals("Alice", repo.getUserData("user-123").displayName)
     }
 
     @Test
-    fun `getDisplayName returns null for non-existent user`() {
+    fun `getUserData throws for non-existent user`() {
         every { dynamoDb.getItem(any<GetItemRequest>()) } returns GetItemResponse.builder()
             .item(emptyMap()).build()
 
-        assertNull(repo.getDisplayName("user-404"))
+        assertFailsWith<Exception> { repo.getUserData("user-404") }
     }
 }
