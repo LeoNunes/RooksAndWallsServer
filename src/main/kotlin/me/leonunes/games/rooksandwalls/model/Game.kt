@@ -11,7 +11,6 @@ import kotlinx.serialization.Serializable
 import me.leonunes.games.common.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.UUID
 
 class GameUpdate
 
@@ -29,7 +28,7 @@ interface Game {
     val pieces : List<Piece>
     val deadPieces: List<Piece>
     val walls : List<Wall>
-    suspend fun joinGame(playerId: String, displayName: String = "Guest") : PlayerId
+    suspend fun joinGame(userId: String, displayName: String) : PlayerId
     fun getDisplayName(playerId: PlayerId): String?
     suspend fun processAction(action: GameAction)
     fun createUpdatesChannel() : ReceiveChannel<GameUpdate>
@@ -71,12 +70,12 @@ class GameImp private constructor(override val id: GameId, override val config: 
     private fun assertGameStage(gameStage: GameStage) = if (this.gameStage != gameStage) throw InvalidStageException() else Unit
     private fun assertPlayersTurn(player: Player) = if (currentTurn != player) throw NotPlayersTurnException() else Unit
 
-    override suspend fun joinGame(playerId: String, displayName: String): PlayerId {
+    override suspend fun joinGame(userId: String, displayName: String): PlayerId {
         gameMutex.withLock {
             if (players.size == config.numberOfPlayers) throw GameFullException()
-            if (players.any { it.id.get() == playerId }) throw PlayerAlreadyJoinedException()
+            if (players.any { it.id.get() == userId }) throw PlayerAlreadyJoinedException()
 
-            val player = Player(playerId.asId())
+            val player = Player(userId.asId())
             playerDisplayNames[player.id] = displayName
             _players.add(player)
             if (players.size == config.numberOfPlayers) startGame()

@@ -44,7 +44,7 @@ fun Application.configureGame() {
             }
 
             val token = call.parameters["token"]
-            val playerId: String = if (token != null) {
+            val userId: String = if (token != null) {
                 val sub = AppDependencies.cognitoJwtValidator?.validate(token)
                 if (sub == null) {
                     close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
@@ -55,11 +55,11 @@ fun Application.configureGame() {
                 UUID.randomUUID().toString()
             }
             val displayName: String = if (token != null) {
-                runCatching { AppDependencies.userRepository.getUserData(playerId).displayName }.getOrDefault("User")
+                AppDependencies.userRepository.getUserData(userId).displayName
             } else {
                 "Guest"
             }
-            val playerIdResult = game.joinGame(playerId, displayName)
+            val playerIdResult = game.joinGame(userId, displayName)
             // TODO: Handle disconnect
 
             sendSerialized(game.getStateDto(playerIdResult))
