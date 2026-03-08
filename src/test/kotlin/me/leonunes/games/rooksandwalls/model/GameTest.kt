@@ -8,6 +8,7 @@ import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.coord
 import me.leonunes.games.common.edgeDown
 import me.leonunes.games.common.edgeUp
+import me.leonunes.games.users.GuestUser
 import org.junit.Rule
 import kotlin.test.*
 
@@ -26,44 +27,30 @@ class GameTest {
     @Test
     fun `player can join game`() = runBlocking {
         val game = GameFactory.createGame()
-        val playerId = game.joinGame("player-test", "Guest")
+        val player = Player(GuestUser("player-test"))
+        game.start(listOf(player) + (1 until game.config.numberOfPlayers).map { Player(GuestUser("player-$it")) })
 
-        assertTrue(game.players.filter { it.id == playerId }.size == 1)
+        assertTrue(game.players.any { it.id.get() == "player-test" })
     }
 
     @Test
-    fun `player cant join if game is full`() : Unit = runBlocking {
-        with(createGameWithPlayers()) {
-            assertFailsWith<GameFullException> {
-                joinGame("extra-player", "Guest")
-            }
-        }
-    }
-
-    @Test
-    @Ignore
-    fun `player can reconnect to game`() {
-        assertTrue(false)
-    }
-
-    @Test
-    fun `channels are notified when player joins`() = runBlocking {
+    fun `channels are notified when game starts`() = runBlocking {
         val game = GameFactory.createGame()
         val channel1 = game.createUpdatesChannel()
         val channel2 = game.createUpdatesChannel()
 
-        game.joinGame("player-1", "Guest")
+        val players = (0 until game.config.numberOfPlayers).map { Player(GuestUser("player-$it")) }
+        game.start(players)
 
         assertTrue(channel1.receiveInstant() != null)
         assertTrue(channel2.receiveInstant() != null)
     }
 
     @Test
-    fun `game starts after all players join`() = runBlocking {
+    fun `game starts after start() is called with all players`() = runBlocking {
         val game = GameFactory.createGame()
-        game.joinGame("player-1", "Guest")
-        game.joinGame("player-2", "Guest")
-        game.joinGame("player-3", "Guest")
+        val players = (0 until game.config.numberOfPlayers).map { Player(GuestUser("player-$it")) }
+        game.start(players)
 
         assertEquals(GameStage.PiecePlacement, game.gameStage)
     }
@@ -335,7 +322,6 @@ class GameTest {
     fun `game can be configured for other number of players`() : Unit = runBlocking {
         with(createGameWithPlayers(GameConfig(numberOfPlayers = 4))) {
             assertEquals(4, players.size)
-            assertFailsWith<GameFullException> { joinGame("extra-player", "Guest") }
         }
     }
 

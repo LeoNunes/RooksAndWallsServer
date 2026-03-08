@@ -9,13 +9,23 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.leonunes.games.common.*
+import me.leonunes.games.users.User
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class GameUpdate
 
 typealias PlayerId = Id<Player, String>
-data class Player(val id: PlayerId)
+
+enum class ConnectionStatus { Connected, Disconnected }
+
+data class Player(
+    val user: User,
+    val connectionStatus: ConnectionStatus = ConnectionStatus.Connected
+) {
+    val id: PlayerId get() = user.id.asId()
+    val displayName: String get() = user.displayName
+}
 
 typealias GameId = Id<Game, Int>
 interface Game {
@@ -23,15 +33,15 @@ interface Game {
     val config: GameConfig
     val gameStage: GameStage
     val currentTurn: Player?
-    val players : List<Player>
+    val players: List<Player>
     val remainingPlayers: List<Player>
-    val pieces : List<Piece>
+    val pieces: List<Piece>
     val deadPieces: List<Piece>
-    val walls : List<Wall>
-    suspend fun joinGame(userId: String, displayName: String) : PlayerId
-    fun getDisplayName(playerId: PlayerId): String?
+    val walls: List<Wall>
+    suspend fun start(players: List<Player>)
+    suspend fun updateConnectionStatus(playerId: PlayerId, status: ConnectionStatus)
     suspend fun processAction(action: GameAction)
-    fun createUpdatesChannel() : ReceiveChannel<GameUpdate>
+    fun createUpdatesChannel(): ReceiveChannel<GameUpdate>
 }
 
 class GameImp private constructor(override val id: GameId, override val config: GameConfig) : Game {
@@ -58,7 +68,6 @@ class GameImp private constructor(override val id: GameId, override val config: 
     override var remainingPlayers = listOf<Player>()
 
     private var nextPieceId = 0
-    private val playerDisplayNames = mutableMapOf<PlayerId, String>()
 
     private val updateChannels: MutableList<SendChannel<GameUpdate>> = mutableListOf()
     private val gameMutex: Mutex = Mutex()
@@ -70,25 +79,21 @@ class GameImp private constructor(override val id: GameId, override val config: 
     private fun assertGameStage(gameStage: GameStage) = if (this.gameStage != gameStage) throw InvalidStageException() else Unit
     private fun assertPlayersTurn(player: Player) = if (currentTurn != player) throw NotPlayersTurnException() else Unit
 
-    override suspend fun joinGame(userId: String, displayName: String): PlayerId {
+    override suspend fun start(players: List<Player>) {
         gameMutex.withLock {
-            if (players.size == config.numberOfPlayers) throw GameFullException()
-            if (players.any { it.id.get() == userId }) throw PlayerAlreadyJoinedException()
-
-            val player = Player(userId.asId())
-            playerDisplayNames[player.id] = displayName
-            _players.add(player)
-            if (players.size == config.numberOfPlayers) startGame()
+            _players.addAll(players)
+            remainingPlayers = _players.toList()
+            startPiecePlacementStage()
             notifyUpdates()
-            return player.id
         }
     }
 
-    override fun getDisplayName(playerId: PlayerId): String? = playerDisplayNames[playerId]
-
-    private fun startGame() {
-        remainingPlayers = players.toList()
-        startPiecePlacementStage()
+    override suspend fun updateConnectionStatus(playerId: PlayerId, status: ConnectionStatus) {
+        gameMutex.withLock {
+            val idx = _players.indexOfFirst { it.id == playerId }
+            if (idx >= 0) _players[idx] = _players[idx].copy(connectionStatus = status)
+            notifyUpdates()
+        }
     }
 
     private fun startPiecePlacementStage() {

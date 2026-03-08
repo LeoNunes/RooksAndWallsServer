@@ -56,13 +56,7 @@ fun Application.configureGame() {
             } else {
                 UUID.randomUUID().toString()
             }
-            val displayName: String = if (token != null) {
-                AppDependencies.userRepository.getUserData(userId).displayName
-            } else {
-                "Guest"
-            }
-            game.joinGame(userId, displayName)
-            // TODO: Handle disconnect
+            // TODO: replaced by GameManager in Task 13
             val playerId = userId.asId<Player>()
 
             sendSerialized(game.getStateDto(playerId))
