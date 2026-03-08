@@ -21,7 +21,7 @@ enum class ConnectionStatus { Connected, Disconnected }
 
 data class Player(
     val user: User,
-    val connectionStatus: ConnectionStatus = ConnectionStatus.Connected
+    var connectionStatus: ConnectionStatus = ConnectionStatus.Connected
 ) {
     val id: PlayerId get() = user.id.asId()
     val displayName: String get() = user.displayName

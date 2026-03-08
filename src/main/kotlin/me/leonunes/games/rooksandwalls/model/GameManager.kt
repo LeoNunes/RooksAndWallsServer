@@ -27,20 +27,18 @@ class GameManager(val game: Game) {
     }
 
     suspend fun disconnectPlayer(playerId: PlayerId): Unit = mutex.withLock {
-        val idx = _players.indexOfFirst { it.id == playerId }
-        if (idx < 0) return@withLock
-        _players[idx] = _players[idx].copy(connectionStatus = ConnectionStatus.Disconnected)
+        val player = _players.find { it.id == playerId } ?: return@withLock
+        player.connectionStatus = ConnectionStatus.Disconnected
         if (game.gameStage != GameStage.WaitingForPlayers) {
             game.notifyUpdates()
         }
     }
 
     private suspend fun reconnect(index: Int): Player {
-        val updated = _players[index].copy(connectionStatus = ConnectionStatus.Connected)
-        _players[index] = updated
+        _players[index].connectionStatus = ConnectionStatus.Connected
         if (game.gameStage != GameStage.WaitingForPlayers) {
             game.notifyUpdates()
         }
-        return updated
+        return _players[index]
     }
 }
