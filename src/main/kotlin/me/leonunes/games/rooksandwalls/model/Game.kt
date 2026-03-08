@@ -9,23 +9,10 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.leonunes.games.common.*
-import me.leonunes.games.users.User
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class GameUpdate
-
-typealias PlayerId = Id<Player, String>
-
-enum class ConnectionStatus { Connected, Disconnected }
-
-data class Player(
-    val user: User,
-    var connectionStatus: ConnectionStatus = ConnectionStatus.Connected
-) {
-    val id: PlayerId get() = user.id.asId()
-    val displayName: String get() = user.displayName
-}
 
 typealias GameId = Id<Game, Int>
 interface Game {
@@ -39,7 +26,6 @@ interface Game {
     val deadPieces: List<Piece>
     val walls: List<Wall>
     suspend fun start(players: List<Player>)
-    suspend fun notifyUpdates()
     suspend fun processAction(action: GameAction)
     fun createUpdatesChannel(): ReceiveChannel<GameUpdate>
 }
@@ -229,7 +215,7 @@ class GameImp private constructor(override val id: GameId, override val config: 
         return channel
     }
 
-    override suspend fun notifyUpdates() {
+    private suspend fun notifyUpdates() {
         updateChannels.forEach { it.send(GameUpdate()) }
         if (gameStage == GameStage.Completed) {
             updateChannels.forEach { it.close() }
@@ -254,6 +240,7 @@ class GameImp private constructor(override val id: GameId, override val config: 
 
 @Serializable
 enum class GameStage {
+    // TODO: Rename to "not_started"
     @SerialName("waiting_for_players")
     WaitingForPlayers,
     @SerialName("piece_placement")

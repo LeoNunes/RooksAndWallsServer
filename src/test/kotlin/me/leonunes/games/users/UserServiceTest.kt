@@ -61,15 +61,6 @@ class UserServiceTest {
     }
 
     @Test
-    fun `getAuthenticatedUser throws InvalidTokenException when validator is absent`() {
-        val serviceWithoutValidator = UserService(mockRepository, null)
-
-        assertFailsWith<InvalidTokenException> {
-            serviceWithoutValidator.getAuthenticatedUser("any-token")
-        }
-    }
-
-    @Test
     fun `getRegisteredUser returns RegisteredUser from repository`() {
         every { mockRepository.getUserData("user-456") } returns object : UserData {
             override val displayName = "Bob"

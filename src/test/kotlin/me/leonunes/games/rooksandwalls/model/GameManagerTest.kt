@@ -7,7 +7,6 @@ import me.leonunes.games.users.GuestUserImpl
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
 @ExperimentalCoroutinesApi
 class GameManagerTest {
@@ -100,18 +99,5 @@ class GameManagerTest {
         manager.disconnectPlayer("user-1".asId())  // game not started yet — should not throw
 
         assertEquals(ConnectionStatus.Disconnected, manager.players[0].connectionStatus)
-    }
-
-    @Test
-    fun `reconnected player triggers update channel notification`() = runBlocking {
-        val game = GameFactory.createGame()
-        val manager = GameManager(game)
-
-        repeat(game.config.numberOfPlayers) { i -> manager.joinGame(GuestUserImpl("user-$i")) }
-
-        val channel = game.createUpdatesChannel()
-        manager.disconnectPlayer("user-0".asId())
-
-        assertTrue(channel.receiveInstant() != null)
     }
 }

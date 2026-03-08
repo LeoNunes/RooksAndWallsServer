@@ -2,7 +2,7 @@ package me.leonunes.games.users
 
 import me.leonunes.games.users.auth.CognitoJwtValidator
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 sealed interface RegisterUserResult {
     data class Success(val user: RegisteredUser) : RegisterUserResult
@@ -13,14 +13,14 @@ sealed interface RegisterUserResult {
 
 class UserService(
     private val repository: UserRepository,
-    private val jwtValidator: CognitoJwtValidator?
+    private val jwtValidator: CognitoJwtValidator
 ) {
     fun getGuestUser(): GuestUser {
         return GuestUserImpl(id = UUID.randomUUID().toString())
     }
 
     fun getAuthenticatedUser(token: String): AuthenticatedUser {
-        val sub = jwtValidator?.validate(token) ?: throw InvalidTokenException()
+        val sub = jwtValidator.validate(token) ?: throw InvalidTokenException()
         val userData = repository.getUserData(sub)
         return AuthenticatedUserImpl(id = sub, displayName = userData.displayName)
     }
@@ -31,7 +31,7 @@ class UserService(
     }
 
     fun registerUser(token: String, displayName: String): RegisterUserResult {
-        val sub = jwtValidator?.validate(token) ?: throw InvalidTokenException()
+        val sub = jwtValidator.validate(token) ?: throw InvalidTokenException()
 
         if (displayName.isBlank() || displayName.length < 4 || displayName.length > 30) {
             return RegisterUserResult.InvalidDisplayName

@@ -20,11 +20,10 @@ object AppDependencies {
     }
 
     val userService: UserService by lazy {
-        val jwtValidator = System.getenv("GAMES_COGNITO_USER_POOL_ID")?.let { userPoolId ->
-            val region = System.getenv("GAMES_COGNITO_REGION")
-                ?: error("GAMES_COGNITO_REGION not set")
-            CognitoJwtValidator(region, userPoolId)
-        }
+        val userPoolId = System.getenv("GAMES_COGNITO_USER_POOL_ID") ?: error("GAMES_COGNITO_USER_POOL_ID not set")
+        val region = System.getenv("GAMES_COGNITO_REGION") ?: error("GAMES_COGNITO_REGION not set")
+        val jwtValidator = CognitoJwtValidator(region, userPoolId)
+
         UserService(userRepository, jwtValidator)
     }
 

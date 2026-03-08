@@ -7,14 +7,7 @@ import io.mockk.mockk
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.asId
 import me.leonunes.games.common.coord
-import me.leonunes.games.rooksandwalls.model.Board
-import me.leonunes.games.rooksandwalls.model.ConnectionStatus
-import me.leonunes.games.rooksandwalls.model.Game
-import me.leonunes.games.rooksandwalls.model.GameConfigDefaultValues
-import me.leonunes.games.rooksandwalls.model.GameStage
-import me.leonunes.games.rooksandwalls.model.Piece
-import me.leonunes.games.rooksandwalls.model.Player
-import me.leonunes.games.rooksandwalls.model.Wall
+import me.leonunes.games.rooksandwalls.model.*
 import me.leonunes.games.users.GuestUserImpl
 import org.junit.Rule
 import kotlin.test.Test
@@ -61,7 +54,7 @@ class GameStateTest {
         every { game.walls } returns walls
         every { game.deadPieces } returns deadPieces
 
-        val dto = game.getStateDto(player1.id, players)
+        val dto = game.getStateDto(player1.id)
         assertEquals(player1.id.get(), dto.playerId)
         assertEquals(20, dto.gameId)
         assert(dto.config.numberOfPlayers == config.numberOfPlayers)

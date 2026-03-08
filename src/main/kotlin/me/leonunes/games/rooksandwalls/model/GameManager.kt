@@ -2,7 +2,6 @@ package me.leonunes.games.rooksandwalls.model
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import me.leonunes.games.common.asId
 import me.leonunes.games.users.User
 
 class GameManager(val game: Game) {
@@ -11,9 +10,10 @@ class GameManager(val game: Game) {
     val players: List<Player> get() = _players.toList()
 
     suspend fun joinGame(user: User): Player = mutex.withLock {
-        val existingIndex = _players.indexOfFirst { it.id == user.id.asId<Player>() }
-        if (existingIndex >= 0) {
-            return@withLock reconnect(existingIndex)
+        val existingPlayer = _players.find { it.user.id == user.id }
+        if (existingPlayer != null) {
+            reconnect(existingPlayer)
+            return@withLock existingPlayer
         }
         if (_players.size >= game.config.numberOfPlayers) throw GameFullException()
 
@@ -26,19 +26,14 @@ class GameManager(val game: Game) {
         player
     }
 
+    // TODO: Send a message in the WS
     suspend fun disconnectPlayer(playerId: PlayerId): Unit = mutex.withLock {
         val player = _players.find { it.id == playerId } ?: return@withLock
         player.connectionStatus = ConnectionStatus.Disconnected
-        if (game.gameStage != GameStage.WaitingForPlayers) {
-            game.notifyUpdates()
-        }
     }
 
-    private suspend fun reconnect(index: Int): Player {
-        _players[index].connectionStatus = ConnectionStatus.Connected
-        if (game.gameStage != GameStage.WaitingForPlayers) {
-            game.notifyUpdates()
-        }
-        return _players[index]
+    // TODO: Send a message in the WS
+    private fun reconnect(player: Player) {
+        player.connectionStatus = ConnectionStatus.Connected
     }
 }

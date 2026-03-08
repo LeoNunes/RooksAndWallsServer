@@ -3,14 +3,7 @@ package me.leonunes.games.dto
 import kotlinx.serialization.Serializable
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.SquareCoordinate
-import me.leonunes.games.rooksandwalls.model.ConnectionStatus
-import me.leonunes.games.rooksandwalls.model.Game
-import me.leonunes.games.rooksandwalls.model.GameConfig
-import me.leonunes.games.rooksandwalls.model.GameStage
-import me.leonunes.games.rooksandwalls.model.Piece
-import me.leonunes.games.rooksandwalls.model.Player
-import me.leonunes.games.rooksandwalls.model.PlayerId
-import me.leonunes.games.rooksandwalls.model.Wall
+import me.leonunes.games.rooksandwalls.model.*
 
 @Serializable
 data class GameStateDTO(
@@ -42,16 +35,15 @@ fun Piece.toDto(): PieceDTO = PieceDTO(id.get(), owner.id.get(), position)
 data class WallDTO(val position: EdgeCoordinate)
 fun Wall.toDto(): WallDTO = WallDTO(position)
 
-fun Game.getStateDto(playerId: PlayerId, allPlayers: List<Player>): GameStateDTO {
-    val remainingPlayerIds = remainingPlayers.map { it.id }.toSet()
+fun Game.getStateDto(playerId: PlayerId): GameStateDTO {
     return GameStateDTO(
         gameId = this.id.get(),
         config = config.toDto(),
         stage = gameStage,
         currentTurn = currentTurn?.id?.get(),
         playerId = playerId.get(),
-        players = allPlayers.map { it.toDto() },
-        remainingPlayers = allPlayers.filter { it.id in remainingPlayerIds }.map { it.toDto() },
+        players = players.map { it.toDto() },
+        remainingPlayers = remainingPlayers.map { it.toDto() },
         pieces = pieces.map { it.toDto() },
         walls = walls.map { it.toDto() },
         deadPieces = deadPieces.map { it.toDto() },
