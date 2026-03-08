@@ -26,9 +26,9 @@ class GameManager(val game: Game) {
         player
     }
 
-    suspend fun disconnectPlayer(playerId: PlayerId) {
+    suspend fun disconnectPlayer(playerId: PlayerId): Unit = mutex.withLock {
         val idx = _players.indexOfFirst { it.id == playerId }
-        if (idx < 0) return
+        if (idx < 0) return@withLock
         _players[idx] = _players[idx].copy(connectionStatus = ConnectionStatus.Disconnected)
         if (game.gameStage != GameStage.WaitingForPlayers) {
             game.notifyUpdates()
