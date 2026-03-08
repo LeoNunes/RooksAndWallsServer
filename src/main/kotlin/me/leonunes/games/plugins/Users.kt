@@ -9,35 +9,33 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.routing
 import kotlinx.serialization.Serializable
 import me.leonunes.games.AppDependencies
-import me.leonunes.games.users.CreateUserResult
 import me.leonunes.games.users.InvalidTokenException
-import java.time.Instant
+import me.leonunes.games.users.RegisterUserResult
 
 fun Application.configureUsers() {
     routing {
         post<CreateUserRequest> {
-            val authenticatedUser = try {
-                val token = extractBearerToken(call) ?: run {
-                    call.respond(HttpStatusCode.Unauthorized); return@post
-                }
-                AppDependencies.userService.getAuthenticatedUser(token)
-            } catch (e: InvalidTokenException) {
-                call.respond(HttpStatusCode.Unauthorized); return@post
-            }
-
-            val body = call.receive<CreateUserRequestBody>()
-            if (body.displayName.isBlank() || body.displayName.length > 30) {
-                call.respond(HttpStatusCode.BadRequest, "Invalid display name")
+            val token = extractBearerToken(call) ?: run {
+                call.respond(HttpStatusCode.Unauthorized)
                 return@post
             }
 
-            when (AppDependencies.userRepository.createUser(
-                authenticatedUser.id, body.displayName, Instant.now().toString()
-            )) {
-                is CreateUserResult.Success ->
-                    call.respond(HttpStatusCode.Created, UserProfileResponse(authenticatedUser.id, body.displayName))
-                is CreateUserResult.DisplayNameTaken ->
+            val body = call.receive<CreateUserRequestBody>()
+
+            when (val result = try {
+                AppDependencies.userService.registerUser(token, body.displayName)
+            } catch (e: InvalidTokenException) {
+                call.respond(HttpStatusCode.Unauthorized)
+                return@post
+            }) {
+                is RegisterUserResult.Success ->
+                    call.respond(HttpStatusCode.Created, UserProfileResponse(result.user.id, result.user.displayName))
+                is RegisterUserResult.AlreadyRegistered ->
+                    call.respond(HttpStatusCode.Conflict, "User already registered")
+                is RegisterUserResult.DisplayNameTaken ->
                     call.respond(HttpStatusCode.Conflict, "Display name taken")
+                is RegisterUserResult.InvalidDisplayName ->
+                    call.respond(HttpStatusCode.BadRequest, "Display name must be between 4 and 30 characters")
             }
         }
 
