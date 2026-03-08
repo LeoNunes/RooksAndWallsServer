@@ -1,5 +1,6 @@
 package me.leonunes.games
 
+import me.leonunes.games.rooksandwalls.model.GameManagerFactory
 import me.leonunes.games.users.UserRepository
 import me.leonunes.games.users.UserService
 import me.leonunes.games.users.auth.CognitoJwtValidator
@@ -26,4 +27,6 @@ object AppDependencies {
         }
         UserService(userRepository, jwtValidator)
     }
+
+    val gameManagerFactory: GameManagerFactory by lazy { GameManagerFactory() }
 }
