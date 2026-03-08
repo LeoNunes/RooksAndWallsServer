@@ -19,6 +19,7 @@ import me.leonunes.games.rooksandwalls.model.GameConfig
 import me.leonunes.games.rooksandwalls.model.GameFactory
 import me.leonunes.games.rooksandwalls.model.GameId
 import me.leonunes.games.rooksandwalls.model.Player
+import me.leonunes.games.users.InvalidTokenException
 import java.util.*
 
 const val apiPathPrefix = "/rw"
@@ -46,12 +47,12 @@ fun Application.configureGame() {
 
             val token = call.parameters["token"]
             val userId: String = if (token != null) {
-                val sub = AppDependencies.cognitoJwtValidator?.validate(token)
-                if (sub == null) {
+                try {
+                    AppDependencies.userService.getAuthenticatedUser(token).id
+                } catch (e: InvalidTokenException) {
                     close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
                     return@webSocket
                 }
-                sub
             } else {
                 UUID.randomUUID().toString()
             }

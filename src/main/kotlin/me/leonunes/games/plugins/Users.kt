@@ -9,15 +9,21 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.routing
 import kotlinx.serialization.Serializable
 import me.leonunes.games.AppDependencies
-import me.leonunes.games.users.auth.CognitoJwtValidator
 import me.leonunes.games.users.CreateUserResult
+import me.leonunes.games.users.InvalidTokenException
 import java.time.Instant
 
 fun Application.configureUsers() {
     routing {
         post<CreateUserRequest> {
-            val userId = extractUserIdFromBearer(call, AppDependencies.cognitoJwtValidator)
-                ?: run { call.respond(HttpStatusCode.Unauthorized); return@post }
+            val authenticatedUser = try {
+                val token = extractBearerToken(call) ?: run {
+                    call.respond(HttpStatusCode.Unauthorized); return@post
+                }
+                AppDependencies.userService.getAuthenticatedUser(token)
+            } catch (e: InvalidTokenException) {
+                call.respond(HttpStatusCode.Unauthorized); return@post
+            }
 
             val body = call.receive<CreateUserRequestBody>()
             if (body.displayName.isBlank() || body.displayName.length > 30) {
@@ -25,32 +31,41 @@ fun Application.configureUsers() {
                 return@post
             }
 
-            when (AppDependencies.userRepository.createUser(userId, body.displayName, Instant.now().toString())) {
-                is CreateUserResult.Success -> call.respond(HttpStatusCode.Created, UserProfileResponse(userId, body.displayName))
-                is CreateUserResult.DisplayNameTaken -> call.respond(HttpStatusCode.Conflict, "Display name taken")
+            when (AppDependencies.userRepository.createUser(
+                authenticatedUser.id, body.displayName, Instant.now().toString()
+            )) {
+                is CreateUserResult.Success ->
+                    call.respond(HttpStatusCode.Created, UserProfileResponse(authenticatedUser.id, body.displayName))
+                is CreateUserResult.DisplayNameTaken ->
+                    call.respond(HttpStatusCode.Conflict, "Display name taken")
             }
         }
 
         get<GetUserMeRequest> {
-            val userId = extractUserIdFromBearer(call, AppDependencies.cognitoJwtValidator)
-                ?: run { call.respond(HttpStatusCode.Unauthorized); return@get }
+            val authenticatedUser = try {
+                val token = extractBearerToken(call) ?: run {
+                    call.respond(HttpStatusCode.Unauthorized); return@get
+                }
+                AppDependencies.userService.getAuthenticatedUser(token)
+            } catch (e: InvalidTokenException) {
+                call.respond(HttpStatusCode.Unauthorized); return@get
+            }
 
             val userData = try {
-                AppDependencies.userRepository.getUserData(userId)
+                AppDependencies.userRepository.getUserData(authenticatedUser.id)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound); return@get
             }
 
-            call.respond(UserProfileResponse(userId, userData.displayName))
+            call.respond(UserProfileResponse(authenticatedUser.id, userData.displayName))
         }
     }
 }
 
-private suspend fun extractUserIdFromBearer(call: ApplicationCall, validator: CognitoJwtValidator?): String? {
+private fun extractBearerToken(call: ApplicationCall): String? {
     val authHeader = call.request.header("Authorization") ?: return null
     if (!authHeader.startsWith("Bearer ")) return null
-    val token = authHeader.removePrefix("Bearer ")
-    return validator?.validate(token)
+    return authHeader.removePrefix("Bearer ")
 }
 
 @Serializable @Resource("/rw/users") class CreateUserRequest

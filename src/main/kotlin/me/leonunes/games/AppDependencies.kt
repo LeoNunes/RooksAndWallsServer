@@ -1,7 +1,8 @@
 package me.leonunes.games
 
-import me.leonunes.games.users.auth.CognitoJwtValidator
 import me.leonunes.games.users.UserRepository
+import me.leonunes.games.users.UserService
+import me.leonunes.games.users.auth.CognitoJwtValidator
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -17,10 +18,12 @@ object AppDependencies {
         UserRepository(dynamoDb, tableName)
     }
 
-    val cognitoJwtValidator: CognitoJwtValidator? by lazy {
-        val userPoolId = System.getenv("GAMES_COGNITO_USER_POOL_ID") ?: return@lazy null
-        val region = System.getenv("GAMES_COGNITO_REGION")
-            ?: error("GAMES_COGNITO_REGION not set")
-        CognitoJwtValidator(region, userPoolId)
+    val userService: UserService by lazy {
+        val jwtValidator = System.getenv("GAMES_COGNITO_USER_POOL_ID")?.let { userPoolId ->
+            val region = System.getenv("GAMES_COGNITO_REGION")
+                ?: error("GAMES_COGNITO_REGION not set")
+            CognitoJwtValidator(region, userPoolId)
+        }
+        UserService(userRepository, jwtValidator)
     }
 }
