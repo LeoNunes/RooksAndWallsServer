@@ -1,5 +1,6 @@
 package me.leonunes.games
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
@@ -17,8 +18,12 @@ import me.leonunes.games.plugins.configureHealthCheck
 import me.leonunes.games.plugins.configureUsers
 import kotlin.time.Duration.Companion.seconds
 
+private val logger = KotlinLogging.logger {}
+
 fun main() {
-    embeddedServer(Netty, port = System.getenv("GAMES_PORT")?.toIntOrNull() ?: 5000, host = "127.0.0.1", module = Application::module)
+    val port = System.getenv("GAMES_PORT")?.toIntOrNull() ?: 5000
+    logger.info { "Starting server on port $port" }
+    embeddedServer(Netty, port = port, host = "127.0.0.1", module = Application::module)
         .start(wait = true)
 }
 
