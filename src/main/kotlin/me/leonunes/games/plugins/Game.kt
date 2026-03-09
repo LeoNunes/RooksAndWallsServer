@@ -46,18 +46,17 @@ fun Application.configureGame() {
                 return@webSocket
             }
 
-            val player = manager.joinGame(user)
-            val playerId = player.id
+            val gameView = manager.joinGame(user)
 
             // TODO: In the future, make `manager.joinGame` automatically call `createUpdatesChannel` in the game
             //  and return a `GameView` object (which is a view of the game from the perspective of a player)
-            sendSerialized(manager.game.getStateDto(playerId))
+            sendSerialized(gameView.getStateDto())
 
             launch {
-                val channel = manager.game.createUpdatesChannel()
+                val channel = gameView.updatesChannel
                 try {
                     for (update in channel) {
-                        sendSerialized(manager.game.getStateDto(playerId))
+                        sendSerialized(gameView.getStateDto())
                     }
                 } finally {
                     channel.cancel()
@@ -69,7 +68,8 @@ fun Application.configureGame() {
                     while (isActive) {
                         try {
                             val dto = receiveDeserialized<ActionDTO>()
-                            manager.game.processAction(dto.getAction(playerId))
+                            // TODO: Process action through GameView: gameView.processAction.
+                            manager.game.processAction(dto.getAction(gameView.player.id))
                         } catch (e: Exception) {
                             send("Error while executing action: ${e.javaClass.name} ${e.message}")
                         }
@@ -79,7 +79,7 @@ fun Application.configureGame() {
                 // TODO: Find a way to keep track of the connections so that, if player connects on a new WS,
                 //  the previous one is closed and only the new one is kept open. And player status is not
                 //  changed to disconnected
-                manager.disconnectPlayer(playerId)
+                manager.disconnectPlayer(gameView.player.id)
             }
         }
     }

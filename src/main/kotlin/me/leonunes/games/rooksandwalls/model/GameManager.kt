@@ -9,11 +9,11 @@ class GameManager(val game: Game) {
     private val mutex = Mutex()
     val players: List<Player> get() = _players.toList()
 
-    suspend fun joinGame(user: User): Player = mutex.withLock {
+    suspend fun joinGame(user: User): GameView = mutex.withLock {
         val existingPlayer = _players.find { it.user.id == user.id }
         if (existingPlayer != null) {
             reconnect(existingPlayer)
-            return@withLock existingPlayer
+            return@withLock GameView(this, existingPlayer)
         }
         if (_players.size >= game.config.numberOfPlayers) throw GameFullException()
 
@@ -23,7 +23,7 @@ class GameManager(val game: Game) {
         if (_players.size == game.config.numberOfPlayers) {
             game.start(_players.toList())
         }
-        player
+        GameView(this, player)
     }
 
     // TODO: Send a message in the WS

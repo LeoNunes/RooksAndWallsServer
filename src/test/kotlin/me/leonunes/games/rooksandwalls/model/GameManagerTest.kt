@@ -12,15 +12,16 @@ import kotlin.test.assertFailsWith
 class GameManagerTest {
 
     @Test
-    fun `joinGame creates player with Connected status`() = runBlocking {
+    fun `joinGame creates GameView with Player with Connected status`() = runBlocking {
         val game = GameFactory.createGame()
         val manager = GameManager(game)
         val user = GuestUserImpl("user-1")
 
-        val player = manager.joinGame(user)
+        val gameView = manager.joinGame(user)
 
-        assertEquals(user, player.user)
-        assertEquals(ConnectionStatus.Connected, player.connectionStatus)
+        assertEquals(gameView.id, game.id)
+        assertEquals(user, gameView.player.user)
+        assertEquals(ConnectionStatus.Connected, gameView.player.connectionStatus)
     }
 
     @Test
@@ -75,7 +76,7 @@ class GameManagerTest {
         manager.disconnectPlayer("user-1".asId())
         val reconnected = manager.joinGame(user)
 
-        assertEquals(ConnectionStatus.Connected, reconnected.connectionStatus)
+        assertEquals(ConnectionStatus.Connected, reconnected.player.connectionStatus)
         assertEquals(1, manager.players.size)
     }
 

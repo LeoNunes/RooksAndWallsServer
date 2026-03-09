@@ -19,7 +19,7 @@ class GameStateTest {
 
     @Test
     fun `Game getStateDto works properly`() {
-        val game = mockk<Game>()
+        val gameView = mockk<GameView>()
         val board = mockk<Board>()
         val config = GameConfigDefaultValues
         val player1 = Player(GuestUserImpl("player-0"))
@@ -44,17 +44,18 @@ class GameStateTest {
             Piece(8.asId(), player2, coord(6, 5), board),
         )
 
-        every { game.id } returns 20.asId()
-        every { game.config } returns config
-        every { game.gameStage } returns GameStage.PiecePlacement
-        every { game.currentTurn } returns player2
-        every { game.players } returns players
-        every { game.remainingPlayers } returns players
-        every { game.pieces } returns pieces
-        every { game.walls } returns walls
-        every { game.deadPieces } returns deadPieces
+        every { gameView.player } returns player1
+        every { gameView.id } returns 20.asId()
+        every { gameView.config } returns config
+        every { gameView.gameStage } returns GameStage.PiecePlacement
+        every { gameView.currentTurn } returns player2
+        every { gameView.players } returns players
+        every { gameView.remainingPlayers } returns players
+        every { gameView.pieces } returns pieces
+        every { gameView.walls } returns walls
+        every { gameView.deadPieces } returns deadPieces
 
-        val dto = game.getStateDto(player1.id)
+        val dto = gameView.getStateDto()
         assertEquals(player1.id.get(), dto.playerId)
         assertEquals(20, dto.gameId)
         assert(dto.config.numberOfPlayers == config.numberOfPlayers)
