@@ -37,3 +37,6 @@ out/
 
 ### Worktrees ###
 .worktrees/
+
+### Local development ###
+.env
