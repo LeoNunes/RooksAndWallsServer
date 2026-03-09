@@ -28,6 +28,7 @@ class AiPlayerRunner(
 
     private suspend fun maybeAct() {
         if (game.gameStage == GameStage.Completed) return
+        if (game.gameStage == GameStage.WaitingForPlayers) return
         if (game.currentTurn?.id != playerId) return
         val action = strategy.chooseAction(game, playerId)
         game.processAction(action)

@@ -28,6 +28,7 @@ class GameManager(val game: Game) {
         player
     }
 
+    // TODO: Send a message in the WS
     suspend fun disconnectPlayer(playerId: PlayerId): Unit = mutex.withLock {
         val player = _players.find { it.id == playerId } ?: return@withLock
         player.connectionStatus = ConnectionStatus.Disconnected
@@ -50,6 +51,7 @@ class GameManager(val game: Game) {
         return player
     }
 
+    // TODO: Send a message in the WS
     private fun reconnect(player: Player) {
         player.connectionStatus = ConnectionStatus.Connected
     }
