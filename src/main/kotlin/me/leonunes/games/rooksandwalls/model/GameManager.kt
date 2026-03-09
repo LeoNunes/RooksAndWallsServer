@@ -15,17 +15,17 @@ class GameManager(val game: Game) {
     private var aiCount = 0
     val players: List<Player> get() = _players.toList()
 
-    suspend fun joinGame(user: User): Player = mutex.withLock {
+    suspend fun joinGame(user: User): GameView = mutex.withLock {
         joinGameInternal(user)
     }
 
-    suspend fun addAiPlayer(scope: CoroutineScope, strategy: AiStrategy = RandomAiStrategy()): Player = mutex.withLock {
+    suspend fun addAiPlayer(scope: CoroutineScope, strategy: AiStrategy = RandomAiStrategy()): GameView = mutex.withLock {
         if (game.gameStage != GameStage.WaitingForPlayers) throw GameAlreadyStartedException()
         val aiUser = AiUser(id = "ai-${game.id.get()}-$aiCount")
         aiCount++
-        val player = joinGameInternal(aiUser)
-        AiPlayerRunner(game, player.id, strategy).start(scope)
-        player
+        val gameView = joinGameInternal(aiUser)
+        AiPlayerRunner(game, gameView.player.id, strategy).start(scope)
+        gameView
     }
 
     // TODO: Send a message in the WS
@@ -34,11 +34,11 @@ class GameManager(val game: Game) {
         player.connectionStatus = ConnectionStatus.Disconnected
     }
 
-    private suspend fun joinGameInternal(user: User): Player {
+    private suspend fun joinGameInternal(user: User): GameView {
         val existingPlayer = _players.find { it.user.id == user.id }
         if (existingPlayer != null) {
             reconnect(existingPlayer)
-            return existingPlayer
+            return GameView(this, existingPlayer)
         }
         if (_players.size >= game.config.numberOfPlayers) throw GameFullException()
 
@@ -48,7 +48,7 @@ class GameManager(val game: Game) {
         if (_players.size == game.config.numberOfPlayers) {
             game.start(_players.toList())
         }
-        return player
+        return GameView(this, player)
     }
 
     // TODO: Send a message in the WS
