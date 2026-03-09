@@ -1,8 +1,13 @@
 package me.leonunes.games.rooksandwalls.model
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import me.leonunes.games.common.asId
+import me.leonunes.games.rooksandwalls.ai.RandomAiStrategy
 import me.leonunes.games.users.GuestUserImpl
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -100,5 +105,47 @@ class GameManagerTest {
         manager.disconnectPlayer("user-1".asId())  // game not started yet — should not throw
 
         assertEquals(ConnectionStatus.Disconnected, manager.players[0].connectionStatus)
+    }
+
+    @Test
+    fun `addAiPlayer adds AI player to manager`() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Default + Job())
+        val game = GameFactory.createGame()
+        val manager = GameManager(game)
+
+        manager.addAiPlayer(scope)
+
+        assertEquals(1, manager.players.size)
+        scope.cancel()
+    }
+
+    @Test
+    fun `addAiPlayer throws GameAlreadyStartedException when game has started`() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Default + Job())
+        val config = GameConfig(numberOfPlayers = 2, piecesPerPlayer = 1, boardRows = 4, boardColumns = 4)
+        val game = GameFactory.createGame(config)
+        val manager = GameManager(game)
+
+        repeat(config.numberOfPlayers) { i -> manager.joinGame(GuestUserImpl("user-$i")) }
+
+        assertFailsWith<GameAlreadyStartedException> {
+            manager.addAiPlayer(scope)
+        }
+        scope.cancel()
+    }
+
+    @Test
+    fun `addAiPlayer with one human starts game and AI completes its turns`() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Default + Job())
+        val config = GameConfig(numberOfPlayers = 2, piecesPerPlayer = 1, boardRows = 4, boardColumns = 4)
+        val game = GameFactory.createGame(config)
+        val manager = GameManager(game)
+
+        manager.joinGame(GuestUserImpl("user-1"))
+        manager.addAiPlayer(scope)
+
+        assertEquals(GameStage.PiecePlacement, game.gameStage)
+        assertEquals(2, manager.players.size)
+        scope.cancel()
     }
 }

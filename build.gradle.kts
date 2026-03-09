@@ -1,6 +1,8 @@
 val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
+val kotlin_logging_version: String by project
+val slf4j_simple_version: String by project
 val mockk_version: String by project
 
 plugins {
@@ -37,6 +39,8 @@ dependencies {
     implementation("io.ktor:ktor-server-resources:$ktor_version")
     implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("io.github.oshai:kotlin-logging-jvm:$kotlin_logging_version")
+    runtimeOnly("org.slf4j:slf4j-simple:$slf4j_simple_version")
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     testImplementation("io.mockk:mockk:${mockk_version}")

@@ -1,5 +1,7 @@
 package me.leonunes.games
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import me.leonunes.games.rooksandwalls.model.GameManagerFactory
 import me.leonunes.games.users.UserRepository
 import me.leonunes.games.users.UserService
@@ -26,6 +28,8 @@ object AppDependencies {
 
         UserService(userRepository, jwtValidator)
     }
+
+    val coroutineScope: CoroutineScope by lazy { CoroutineScope(SupervisorJob()) }
 
     val gameManagerFactory: GameManagerFactory by lazy { GameManagerFactory() }
 }

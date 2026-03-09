@@ -1,5 +1,6 @@
 package me.leonunes.games.plugins
 
+import io.ktor.http.*
 import io.ktor.resources.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -15,7 +16,9 @@ import me.leonunes.games.AppDependencies
 import me.leonunes.games.common.asId
 import me.leonunes.games.dto.ActionDTO
 import me.leonunes.games.dto.getStateDto
+import me.leonunes.games.rooksandwalls.model.GameAlreadyStartedException
 import me.leonunes.games.rooksandwalls.model.GameConfig
+import me.leonunes.games.rooksandwalls.model.GameFullException
 import me.leonunes.games.rooksandwalls.model.GameId
 import me.leonunes.games.users.InvalidTokenException
 import me.leonunes.games.users.User
@@ -31,6 +34,23 @@ fun Application.configureGame() {
             }
             val manager = AppDependencies.gameManagerFactory.createGame(config)
             call.respond(CreateGameResponse(manager.game.id.get()))
+        }
+
+        post<AddAiPlayerRequest> { request ->
+            val gameId: GameId = request.gameId.asId()
+            val manager = AppDependencies.gameManagerFactory.getManager(gameId)
+            if (manager == null) {
+                call.respond(HttpStatusCode.NotFound)
+                return@post
+            }
+            try {
+                val gameView = manager.addAiPlayer(AppDependencies.coroutineScope)
+                call.respond(AddAiResponse(playerId = gameView.player.id.get(), displayName = gameView.player.displayName))
+            } catch (e: GameFullException) {
+                call.respond(HttpStatusCode.Conflict, "Game is full")
+            } catch (e: GameAlreadyStartedException) {
+                call.respond(HttpStatusCode.Conflict, "Game has already started")
+            }
         }
 
         webSocket("$apiPathPrefix/game/{gameId}") {
@@ -108,3 +128,10 @@ class CreateGameRequestBody(
 
 @Serializable
 class CreateGameResponse(val gameId: Int)
+
+@Serializable
+@Resource("$apiPathPrefix/game/{gameId}/ai")
+class AddAiPlayerRequest(val gameId: Int)
+
+@Serializable
+class AddAiResponse(val playerId: String, val displayName: String)
