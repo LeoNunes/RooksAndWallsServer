@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class GameUpdate
 
-typealias GameId = Id<Game, Int>
+typealias GameId = Id<Game, String>
 interface Game {
     val id: GameId
     val config: GameConfig
@@ -228,7 +228,7 @@ class GameImp private constructor(override val id: GameId, override val config: 
         fun getGameById(id: GameId) : Game? = games[id]
 
         fun createGame(config: GameConfig) : Game {
-            val id: GameId = nextId.getAndIncrement().asId()
+            val id: GameId = nextId.getAndIncrement().toString().asId()
             return GameImp(id, config).also { games[id] = it }
         }
 

@@ -1,5 +1,6 @@
 package me.leonunes.games.plugins
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.resources.*
 import io.ktor.server.application.*
@@ -23,6 +24,8 @@ import me.leonunes.games.rooksandwalls.model.GameId
 import me.leonunes.games.users.InvalidTokenException
 import me.leonunes.games.users.User
 
+private val logger = KotlinLogging.logger {}
+
 const val apiPathPrefix = "/rw"
 
 fun Application.configureGame() {
@@ -33,6 +36,7 @@ fun Application.configureGame() {
                 GameConfig(it.numberOfPlayers, it.piecesPerPlayer, it.boardRows, it.boardColumns)
             }
             val manager = AppDependencies.gameManagerFactory.createGame(config)
+            logger.info { "game created: ${manager.game.id}" }
             call.respond(CreateGameResponse(manager.game.id.get()))
         }
 
@@ -45,6 +49,7 @@ fun Application.configureGame() {
             }
             try {
                 val gameView = manager.addAiPlayer(AppDependencies.coroutineScope)
+                logger.info { "Bot added successfully to game $gameId" }
                 call.respond(AddAiResponse(playerId = gameView.player.id.get(), displayName = gameView.player.displayName))
             } catch (e: GameFullException) {
                 call.respond(HttpStatusCode.Conflict, "Game is full")
@@ -54,18 +59,24 @@ fun Application.configureGame() {
         }
 
         webSocket("$apiPathPrefix/game/{gameId}") {
+            val gameId: GameId? = call.parameters["gameId"]?.asId()
+
+            logger.info { "Attempting to connect to $gameId" }
+
             val user: User = resolveUser(call) ?: run {
+                logger.info { "Invalid token" }
                 close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
                 return@webSocket
             }
 
-            val gameId: GameId? = call.parameters["gameId"]?.toIntOrNull()?.asId()
             val manager = gameId?.let { AppDependencies.gameManagerFactory.getManager(it) }
             if (manager == null) {
+                logger.info { "Game not found" }
                 close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Websocket closed due to nonexistent game"))
                 return@webSocket
             }
 
+            // TODO: Handle exceptions
             val gameView = manager.joinGame(user)
 
             // TODO: In the future, make `manager.joinGame` automatically call `createUpdatesChannel` in the game
@@ -127,11 +138,11 @@ class CreateGameRequestBody(
 )
 
 @Serializable
-class CreateGameResponse(val gameId: Int)
+class CreateGameResponse(val gameId: String)
 
 @Serializable
 @Resource("$apiPathPrefix/game/{gameId}/ai")
-class AddAiPlayerRequest(val gameId: Int)
+class AddAiPlayerRequest(val gameId: String)
 
 @Serializable
 class AddAiResponse(val playerId: String, val displayName: String)

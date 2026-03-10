@@ -7,7 +7,7 @@ import me.leonunes.games.rooksandwalls.model.*
 
 @Serializable
 data class GameStateDTO(
-    val gameId: Int,
+    val gameId: String,
     val config: GameConfigDTO,
     val stage: GameStage,
     val currentTurn: String?,
@@ -37,7 +37,7 @@ fun Wall.toDto(): WallDTO = WallDTO(position)
 
 fun GameView.getStateDto(): GameStateDTO {
     return GameStateDTO(
-        gameId = this.id.get(),
+        gameId = this.id.get().toString(),
         config = config.toDto(),
         stage = gameStage,
         currentTurn = currentTurn?.id?.get(),
