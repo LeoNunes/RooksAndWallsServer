@@ -1,4 +1,3 @@
-// src/main/kotlin/me/leonunes/games/rooksandwalls/ai/MctsAiStrategy.kt
 package me.leonunes.games.rooksandwalls.ai
 
 import kotlinx.serialization.Serializable

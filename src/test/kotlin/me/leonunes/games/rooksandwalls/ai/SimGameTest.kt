@@ -1,4 +1,3 @@
-// src/test/kotlin/me/leonunes/games/rooksandwalls/ai/SimGameTest.kt
 package me.leonunes.games.rooksandwalls.ai
 
 import me.leonunes.games.common.EdgeCoordinate

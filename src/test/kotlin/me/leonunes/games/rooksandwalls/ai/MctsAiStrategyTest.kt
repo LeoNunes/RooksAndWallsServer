@@ -1,4 +1,3 @@
-// src/test/kotlin/me/leonunes/games/rooksandwalls/ai/MctsAiStrategyTest.kt
 package me.leonunes.games.rooksandwalls.ai
 
 import kotlinx.coroutines.runBlocking

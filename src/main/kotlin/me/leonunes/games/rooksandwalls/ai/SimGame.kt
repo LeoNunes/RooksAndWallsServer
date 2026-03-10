@@ -1,4 +1,3 @@
-// src/main/kotlin/me/leonunes/games/rooksandwalls/ai/SimGame.kt
 package me.leonunes.games.rooksandwalls.ai
 
 import me.leonunes.games.common.*
