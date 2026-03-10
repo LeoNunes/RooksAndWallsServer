@@ -1,7 +1,9 @@
 package me.leonunes.games.rooksandwalls.ai
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.leonunes.games.rooksandwalls.model.Game
 import me.leonunes.games.rooksandwalls.model.GameStage
 import me.leonunes.games.rooksandwalls.model.PlayerId
@@ -30,7 +32,7 @@ class AiPlayerRunner(
         if (game.gameStage == GameStage.Completed) return
         if (game.gameStage == GameStage.WaitingForPlayers) return
         if (game.currentTurn?.id != playerId) return
-        val action = strategy.chooseAction(game, playerId)
+        val action = withContext(Dispatchers.Default) { strategy.chooseAction(game, playerId) }
         game.processAction(action)
     }
 }

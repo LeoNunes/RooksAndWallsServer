@@ -17,6 +17,7 @@ import me.leonunes.games.AppDependencies
 import me.leonunes.games.common.asId
 import me.leonunes.games.dto.ActionDTO
 import me.leonunes.games.dto.getStateDto
+import me.leonunes.games.rooksandwalls.ai.AiDifficulty
 import me.leonunes.games.rooksandwalls.model.GameAlreadyStartedException
 import me.leonunes.games.rooksandwalls.model.GameConfig
 import me.leonunes.games.rooksandwalls.model.GameFullException
@@ -47,8 +48,10 @@ fun Application.configureGame() {
                 call.respond(HttpStatusCode.NotFound)
                 return@post
             }
+            val body = runCatching { call.receive<AddAiPlayerRequestBody>() }.getOrNull()
+            val strategy = (body?.difficulty ?: AiDifficulty.RANDOM).toAiStrategy()
             try {
-                val gameView = manager.addAiPlayer(AppDependencies.coroutineScope)
+                val gameView = manager.addAiPlayer(AppDependencies.coroutineScope, strategy)
                 logger.info { "Bot added successfully to game $gameId" }
                 call.respond(AddAiResponse(playerId = gameView.player.id.get(), displayName = gameView.player.displayName))
             } catch (e: GameFullException) {
@@ -143,6 +146,9 @@ class CreateGameResponse(val gameId: String)
 @Serializable
 @Resource("$apiPathPrefix/game/{gameId}/ai")
 class AddAiPlayerRequest(val gameId: String)
+
+@Serializable
+class AddAiPlayerRequestBody(val difficulty: AiDifficulty = AiDifficulty.RANDOM)
 
 @Serializable
 class AddAiResponse(val playerId: String, val displayName: String)

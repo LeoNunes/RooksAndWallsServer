@@ -68,7 +68,10 @@ class MctsAiStrategyTest {
         val playerId = game.currentTurn!!.id
         val killingWall = EdgeCoordinate(coord(0, 0), coord(0, 1))
 
-        val strategy = MctsAiStrategy(MctsConfig.EASY)  // 50 sims is enough: 100% win on this wall
+        // HeuristicPlayoutPolicy strongly biases toward opponent-killing walls, guaranteeing
+        // killingWall is found within MAX_CHILDREN expansions. RandomPlayoutPolicy is unreliable
+        // here because killingWall is only 1 of ~22 candidates and may never be sampled.
+        val strategy = MctsAiStrategy(MctsConfig(100, null, HeuristicPlayoutPolicy()))
         val action = strategy.chooseAction(game, playerId) as MoveAction
         assert(action.wallPlacement.wallPosition == killingWall) {
             "Expected MCTS to select killing wall $killingWall but got ${action.wallPlacement.wallPosition}"
