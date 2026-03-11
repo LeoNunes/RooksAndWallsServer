@@ -53,7 +53,7 @@ data class MctsConfig(
         val EASY    = MctsConfig(50,             null,   RandomPlayoutPolicy())
         val MEDIUM  = MctsConfig(500,            null,   RandomPlayoutPolicy())
         val HARD    = MctsConfig(3000,           null,   HeuristicPlayoutPolicy())
-        val MAXIMUM = MctsConfig(Int.MAX_VALUE,  5000L,  HeuristicPlayoutPolicy())
+        val MAXIMUM = MctsConfig(Int.MAX_VALUE,  20000L,  HeuristicPlayoutPolicy())
     }
 }
 
