@@ -45,7 +45,7 @@ class GameStateTest {
         )
 
         every { gameView.player } returns player1
-        every { gameView.id } returns 20.asId()
+        every { gameView.id } returns "20".asId<Game, String>()
         every { gameView.config } returns config
         every { gameView.gameStage } returns GameStage.PiecePlacement
         every { gameView.currentTurn } returns player2
@@ -57,7 +57,7 @@ class GameStateTest {
 
         val dto = gameView.getStateDto()
         assertEquals(player1.id.get(), dto.playerId)
-        assertEquals(20, dto.gameId)
+        assertEquals("20", dto.gameId)
         assert(dto.config.numberOfPlayers == config.numberOfPlayers)
         assert(dto.config.piecesPerPlayer == config.piecesPerPlayer)
         assert(dto.config.boardRows == config.boardRows)
