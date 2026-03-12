@@ -13,9 +13,12 @@ import io.ktor.server.resources.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import kotlinx.serialization.json.Json
+import me.leonunes.games.di.appModule
 import me.leonunes.games.plugins.configureGame
 import me.leonunes.games.plugins.configureHealthCheck
 import me.leonunes.games.plugins.configureUsers
+import org.koin.ktor.plugin.Koin
+import org.koin.logger.slf4jLogger
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
@@ -28,6 +31,11 @@ fun main() {
 }
 
 fun Application.module() {
+    install(Koin) {
+        slf4jLogger()
+        modules(appModule)
+    }
+
     installPlugins()
 
     configureHealthCheck()

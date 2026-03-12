@@ -8,11 +8,14 @@ import io.ktor.server.resources.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.routing
 import kotlinx.serialization.Serializable
-import me.leonunes.games.AppDependencies
 import me.leonunes.games.users.InvalidTokenException
+import me.leonunes.games.users.UserService
+import org.koin.ktor.ext.inject
 import me.leonunes.games.users.RegisterUserResult
 
 fun Application.configureUsers() {
+    val userService: UserService by inject()
+
     routing {
         post<CreateUserRequest> {
             val token = extractBearerToken(call) ?: run {
@@ -23,7 +26,7 @@ fun Application.configureUsers() {
             val body = call.receive<CreateUserRequestBody>()
 
             when (val result = try {
-                AppDependencies.userService.registerUser(token, body.displayName)
+                userService.registerUser(token, body.displayName)
             } catch (e: InvalidTokenException) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@post
@@ -45,7 +48,7 @@ fun Application.configureUsers() {
                     call.respond(HttpStatusCode.Unauthorized)
                     return@get
                 }
-                AppDependencies.userService.getAuthenticatedUser(token)
+                userService.getAuthenticatedUser(token)
             } catch (e: InvalidTokenException) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@get

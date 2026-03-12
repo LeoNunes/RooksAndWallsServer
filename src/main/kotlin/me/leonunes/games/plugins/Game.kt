@@ -13,8 +13,10 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import me.leonunes.games.AppDependencies
 import me.leonunes.games.common.asId
+import me.leonunes.games.rooksandwalls.model.GameManagerFactory
+import me.leonunes.games.users.UserService
+import org.koin.ktor.ext.inject
 import me.leonunes.games.dto.ActionDTO
 import me.leonunes.games.dto.getStateDto
 import me.leonunes.games.rooksandwalls.ai.AiDifficulty
@@ -30,20 +32,23 @@ private val logger = KotlinLogging.logger {}
 const val apiPathPrefix = "/rw"
 
 fun Application.configureGame() {
+    val gameManagerFactory: GameManagerFactory by inject()
+    val userService: UserService by inject()
+
     routing {
         post<CreateGameRequest> {
             val body = runCatching { call.receive<CreateGameRequestBody>() }.getOrNull()
             val config = body?.let {
                 GameConfig(it.numberOfPlayers, it.piecesPerPlayer, it.boardRows, it.boardColumns)
             }
-            val manager = AppDependencies.gameManagerFactory.createGame(config)
+            val manager = gameManagerFactory.createGame(config)
             logger.info { "game created: ${manager.game.id}" }
             call.respond(CreateGameResponse(manager.game.id.get()))
         }
 
         post<AddAiPlayerRequest> { request ->
             val gameId: GameId = request.gameId.asId()
-            val manager = AppDependencies.gameManagerFactory.getManager(gameId)
+            val manager = gameManagerFactory.getManager(gameId)
             if (manager == null) {
                 call.respond(HttpStatusCode.NotFound)
                 return@post
@@ -51,7 +56,7 @@ fun Application.configureGame() {
             val body = runCatching { call.receive<AddAiPlayerRequestBody>() }.getOrNull()
             val strategy = (body?.difficulty ?: AiDifficulty.RANDOM).toAiStrategy()
             try {
-                val gameView = manager.addAiPlayer(AppDependencies.coroutineScope, strategy)
+                val gameView = manager.addAiPlayer(call.application, strategy)
                 logger.info { "Bot added successfully to game $gameId" }
                 call.respond(AddAiResponse(playerId = gameView.player.id.get(), displayName = gameView.player.displayName))
             } catch (e: GameFullException) {
@@ -66,13 +71,13 @@ fun Application.configureGame() {
 
             logger.info { "Attempting to connect to $gameId" }
 
-            val user: User = resolveUser(call) ?: run {
+            val user: User = resolveUser(call, userService) ?: run {
                 logger.info { "Invalid token" }
                 close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Invalid token"))
                 return@webSocket
             }
 
-            val manager = gameId?.let { AppDependencies.gameManagerFactory.getManager(it) }
+            val manager = gameId?.let { gameManagerFactory.getManager(it) }
             if (manager == null) {
                 logger.info { "Game not found" }
                 close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Websocket closed due to nonexistent game"))
@@ -119,10 +124,10 @@ fun Application.configureGame() {
     }
 }
 
-private fun resolveUser(call: ApplicationCall): User? {
-    val token = call.parameters["token"] ?: return AppDependencies.userService.getGuestUser()
+private fun resolveUser(call: ApplicationCall, userService: UserService): User? {
+    val token = call.parameters["token"] ?: return userService.getGuestUser()
     return try {
-        AppDependencies.userService.getAuthenticatedUser(token)
+        userService.getAuthenticatedUser(token)
     } catch (e: InvalidTokenException) {
         null
     }

@@ -4,6 +4,7 @@ val logback_version: String by project
 val kotlin_logging_version: String by project
 val slf4j_simple_version: String by project
 val mockk_version: String by project
+val koin_version: String by project
 
 plugins {
     kotlin("jvm") version "2.3.0"
@@ -48,6 +49,10 @@ dependencies {
     // JWT validation
     implementation("com.auth0:java-jwt:4.4.0")
     implementation("com.auth0:jwks-rsa:0.22.1")
+
+    // Koin
+    implementation("io.insert-koin:koin-ktor:$koin_version")
+    implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
 
     // AWS SDK for DynamoDB
     implementation(platform("software.amazon.awssdk:bom:2.31.0"))
