@@ -8,7 +8,6 @@ import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.coord
 import me.leonunes.games.common.edgeDown
 import me.leonunes.games.common.edgeUp
-import me.leonunes.games.users.GuestUserImpl
 import org.junit.Rule
 import kotlin.test.*
 
@@ -19,38 +18,27 @@ class GameTest {
 
     @Test
     fun `game start in WaitingForPlayers stage`() {
-        val game = GameFactory.createGame()
+        val game = GameFactory().createGame(GameConfigDefaultValues)
 
-        assertEquals(GameStage.WaitingForPlayers, game.gameStage)
-    }
-
-    @Test
-    fun `player can join game`() = runBlocking {
-        val game = GameFactory.createGame()
-        val player = Player(GuestUserImpl("player-test"))
-        game.start(listOf(player) + (1 until game.config.numberOfPlayers).map { Player(GuestUserImpl("player-$it")) })
-
-        assertTrue(game.players.any { it.id.get() == "player-test" })
+        assertEquals(GameStage.NotStarted, game.gameStage)
     }
 
     @Test
     fun `channels are notified when game starts`() = runBlocking {
-        val game = GameFactory.createGame()
+        val game = GameFactory().createGame(GameConfigDefaultValues)
         val channel1 = game.createUpdatesChannel()
         val channel2 = game.createUpdatesChannel()
 
-        val players = (0 until game.config.numberOfPlayers).map { Player(GuestUserImpl("player-$it")) }
-        game.start(players)
+        game.start()
 
         assertTrue(channel1.receiveInstant() != null)
         assertTrue(channel2.receiveInstant() != null)
     }
 
     @Test
-    fun `game starts after start() is called with all players`() = runBlocking {
-        val game = GameFactory.createGame()
-        val players = (0 until game.config.numberOfPlayers).map { Player(GuestUserImpl("player-$it")) }
-        game.start(players)
+    fun `game starts after start() is called`() = runBlocking {
+        val game = GameFactory().createGame(GameConfigDefaultValues)
+        game.start()
 
         assertEquals(GameStage.PiecePlacement, game.gameStage)
     }
@@ -62,7 +50,7 @@ class GameTest {
         val channel1 = game.createUpdatesChannel()
         val channel2 = game.createUpdatesChannel()
 
-        game.processAction(AddPieceAction(game.currentTurn!!.id, coord(0, 0)))
+        game.processAction(AddPieceAction(game.currentTurn!!, coord(0, 0)))
 
         assertTrue(channel1.receiveInstant() != null)
         assertTrue(channel2.receiveInstant() != null)
@@ -78,7 +66,7 @@ class GameTest {
             assertEquals(GameStage.Moves, gameStage)
             assertEquals(actions.size, pieces.size)
             assertEach(actions) { act ->
-                pieces.filter { it.owner.id == act.playerId && it.position == act.position }.size == 1
+                pieces.filter { it.owner == act.playerNumber && it.position == act.position }.size == 1
             }
         }
     }
@@ -113,11 +101,11 @@ class GameTest {
                 AddPieceAction(player1, coord(0, 5)),
             ).forEach { processAction(it) }
 
-            assertEquals(player3, currentTurn?.id)
+            assertEquals(player3, currentTurn)
             processAction(MoveAction(player3, PieceMovement(piece3_1, coord(1, 2)), WallPlacement(coord(7, 7).edgeUp())))
-            assertEquals(player2, currentTurn?.id)
+            assertEquals(player2, currentTurn)
             processAction(MoveAction(player2, PieceMovement(piece2_1, coord(1, 1)), WallPlacement(coord(7, 6).edgeUp())))
-            assertEquals(player1, currentTurn?.id)
+            assertEquals(player1, currentTurn)
         }
 
         with (createGameWithPlayers(GameConfig(piecesPerPlayer = 1))){
@@ -127,11 +115,11 @@ class GameTest {
                 AddPieceAction(player3, coord(0, 2)),
             ).forEach { processAction(it) }
 
-            assertEquals(player1, currentTurn?.id)
+            assertEquals(player1, currentTurn)
             processAction(MoveAction(player1, PieceMovement(piece1_1, coord(1, 0)), WallPlacement(coord(7, 7).edgeUp())))
-            assertEquals(player2, currentTurn?.id)
+            assertEquals(player2, currentTurn)
             processAction(MoveAction(player2, PieceMovement(piece2_1, coord(1, 1)), WallPlacement(coord(7, 6).edgeUp())))
-            assertEquals(player3, currentTurn?.id)
+            assertEquals(player3, currentTurn)
         }
     }
 
@@ -143,9 +131,9 @@ class GameTest {
             val action = winningMovePieceActions().first()
             processAction(action)
 
-            assertTrue(action.playerId != currentTurn!!.id)
+            assertTrue(action.playerNumber != currentTurn!!)
             assertTrue(pieces.find {
-                it.id == action.pieceMovement!!.pieceId && it.position == action.pieceMovement!!.position && it.owner.id == action.playerId
+                it.id == action.pieceMovement!!.pieceId && it.position == action.pieceMovement!!.position && it.owner == action.playerNumber
             } != null)
         }
     }
@@ -208,12 +196,12 @@ class GameTest {
             ).forEach { processAction(it) }
 
             // player1 goes first; all their pieces are fully surrounded — wall-only move
-            assertEquals(player1, currentTurn?.id)
+            assertEquals(player1, currentTurn)
             processAction(MoveAction(player1, null, WallPlacement(coord(5, 5).edgeDown())))
 
             // wall was placed, turn passed to player2
             assertEquals(1, walls.size)
-            assertEquals(player2, currentTurn?.id)
+            assertEquals(player2, currentTurn)
         }
     }
 
@@ -236,8 +224,8 @@ class GameTest {
 
             assertEquals(1, deadPieces.size)
             assertEquals(8, pieces.size)
-            assertTrue(pieces.find { it.owner.id == players[0].id && it.position == coord(0, 5) } == null)
-            assertTrue(deadPieces.find { it.owner.id == players[0].id && it.position == coord(0, 5) } != null)
+            assertTrue(pieces.find { it.owner == player1 && it.position == coord(0, 5) } == null)
+            assertTrue(deadPieces.find { it.owner == player1 && it.position == coord(0, 5) } != null)
         }
     }
 
@@ -249,11 +237,11 @@ class GameTest {
 
             assertEquals(3, deadPieces.size)
             assertEquals(6, pieces.size)
-            assertTrue(pieces.none { it.owner == players[0] })
-            assertTrue(deadPieces.all { it.owner == players[0] })
+            assertTrue(pieces.none { it.owner == player1 })
+            assertTrue(deadPieces.all { it.owner == player1 })
             assertTrue(deadPieces.distinctBy { it.position }.size == 3)
-            assertTrue(remainingPlayers.none { it == players[0] })
-            assertEquals(players[1], currentTurn)
+            assertTrue(remainingPlayers.none { it == player1 })
+            assertEquals(player2, currentTurn)
         }
     }
 
@@ -266,7 +254,7 @@ class GameTest {
 
             assertEquals(GameStage.Completed, gameStage)
             assertEquals(1, remainingPlayers.size)
-            assertEquals(players[1], remainingPlayers[0])
+            assertEquals(player2, remainingPlayers[0])
             assertNull(currentTurn)
             assertEquals("result", "won")
         }
@@ -305,7 +293,7 @@ class GameTest {
 
     @Test
     fun `game can be configured`() {
-        assertEquals(GameConfigDefaultValues, GameFactory.createGame().config)
+        assertEquals(GameConfigDefaultValues, GameFactory().createGame(GameConfigDefaultValues).config)
 
         assertEquals(
             GameConfig(
@@ -314,14 +302,14 @@ class GameTest {
                 boardRows = 4,
                 boardColumns = GameConfigDefaultValues.boardColumns
             ),
-            GameFactory.createGame(GameConfig(numberOfPlayers = 5, piecesPerPlayer = 2, boardRows = 4)).config
+            GameFactory().createGame(GameConfig(numberOfPlayers = 5, piecesPerPlayer = 2, boardRows = 4)).config
         )
     }
 
     @Test
     fun `game can be configured for other number of players`() : Unit = runBlocking {
         with(createGameWithPlayers(GameConfig(numberOfPlayers = 4))) {
-            assertEquals(4, players.size)
+            assertEquals(4, config.numberOfPlayers)
         }
     }
 

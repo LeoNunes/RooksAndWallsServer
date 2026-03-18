@@ -10,11 +10,11 @@ class GameView(private val gameManager: GameManager, val player: Player) {
         get() = game().config
     val gameStage: GameStage
         get() = game().gameStage
-    val currentTurn: Player?
+    val currentTurn: PlayerNumber?
         get() = game().currentTurn
     val players: List<Player>
         get() = gameManager.players
-    val remainingPlayers: List<Player>
+    val remainingPlayers: List<PlayerNumber>
         get() = game().remainingPlayers
     val pieces: List<Piece>
         get() = game().pieces

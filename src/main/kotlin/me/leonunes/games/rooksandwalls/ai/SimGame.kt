@@ -130,22 +130,20 @@ class SimGame(
 
     companion object {
         fun from(game: Game): SimGame {
-            val players = game.players
-            val playerIndexById = players.mapIndexed { idx, p -> p.id to idx }.toMap()
-            val currentPlayerIndex = playerIndexById[game.currentTurn?.id] ?: 0
-            val eliminatedIds = players.map { it.id }.toSet() - game.remainingPlayers.map { it.id }.toSet()
-            val eliminatedIndices = eliminatedIds.map { playerIndexById[it]!! }.toMutableSet()
+            val eliminatedPlayers = (0 until game.config.numberOfPlayers)
+                .filter { it !in game.remainingPlayers }
+                .toMutableSet()
 
             return SimGame(
                 rows = game.config.boardRows,
                 columns = game.config.boardColumns,
-                playerCount = players.size,
-                currentPlayerIndex = currentPlayerIndex,
+                playerCount = game.config.numberOfPlayers,
+                currentPlayerIndex = game.currentTurn ?: 0,
                 pieces = game.pieces.map { piece ->
-                    SimPiece(playerIndexById[piece.owner.id]!!, piece.position)
+                    SimPiece(piece.owner, piece.position)
                 }.toMutableList(),
                 wallSet = game.walls.map { it.position }.toMutableSet(),
-                eliminatedPlayers = eliminatedIndices
+                eliminatedPlayers = eliminatedPlayers
             )
         }
     }

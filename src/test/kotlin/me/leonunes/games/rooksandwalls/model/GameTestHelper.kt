@@ -5,12 +5,10 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.runBlocking
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.coord
-import me.leonunes.games.users.GuestUserImpl
 
 fun createGameWithPlayers(config: GameConfig = GameConfigDefaultValues): Game = runBlocking {
-    val game = GameFactory.createGame(config)
-    val players = (0 until config.numberOfPlayers).map { Player(GuestUserImpl("player-$it")) }
-    game.start(players)
+    val game = GameFactory().createGame(config)
+    game.start()
     game
 }
 
@@ -96,13 +94,13 @@ fun Game.runDrawingMovePieceActions() = runBlocking {
     drawingMovePieceActions().forEach { processAction(it) }
 }
 
-fun Game.piecesByPlayer() : Map<PlayerId, List<Piece>> {
-    return pieces.groupBy { it.owner.id }
+fun Game.piecesByPlayer(): Map<PlayerNumber, List<Piece>> {
+    return pieces.groupBy { it.owner }
 }
 
-val Game.player1 get() = players[0].id
-val Game.player2 get() = players[1].id
-val Game.player3 get() = players[2].id
+val Game.player1: PlayerNumber get() = 0
+val Game.player2: PlayerNumber get() = 1
+val Game.player3: PlayerNumber get() = 2
 val Game.piece1_1 get() = piecesByPlayer()[player1]!![0].id
 val Game.piece1_2 get() = piecesByPlayer()[player1]!![1].id
 val Game.piece1_3 get() = piecesByPlayer()[player1]!![2].id

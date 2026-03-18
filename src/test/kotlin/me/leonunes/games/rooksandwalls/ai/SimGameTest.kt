@@ -29,9 +29,8 @@ class SimGameTest {
         assertEquals(8, sim.rows)
         assertEquals(8, sim.columns)
         assertEquals(9, sim.pieces.size)  // 3 players × 3 pieces
-        // currentPlayerIndex should match the current turn player
-        val expectedIndex = game.players.indexOfFirst { it.id == game.currentTurn?.id }
-        assertEquals(expectedIndex, sim.currentPlayerIndex)
+        // currentPlayerIndex should match the current turn player number
+        assertEquals(game.currentTurn, sim.currentPlayerIndex)
         assertFalse(sim.isTerminal())
     }
 

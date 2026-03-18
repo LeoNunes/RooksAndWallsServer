@@ -11,10 +11,10 @@ class ActionsTest {
     @Test
     fun `AddPieceDTO toModel works properly`() {
         val dto = AddPieceDTO(coord(2, 5))
-        val model = dto.toModel("player-10".asId())
+        val model = dto.toModel(10)
 
         assertEquals(dto.position, model.position)
-        assertEquals("player-10".asId(), model.playerId)
+        assertEquals(10, model.playerNumber)
     }
 
     @Test
@@ -22,22 +22,22 @@ class ActionsTest {
         val pieceMovementDto = PieceMovementDTO(3, coord(1, 5))
         val wallPlacementDto = WallPlacementDTO(EdgeCoordinate(coord(5, 3), coord(5, 4)))
         val dto = MoveActionDTO(pieceMovementDto, wallPlacementDto)
-        val model = dto.toModel("player-2".asId())
+        val model = dto.toModel(2)
 
         assertEquals(pieceMovementDto.pieceId.asId(), model.pieceMovement!!.pieceId)
         assertEquals(pieceMovementDto.position, model.pieceMovement!!.position)
         assertEquals(wallPlacementDto.wallPosition, model.wallPlacement.wallPosition)
-        assertEquals("player-2".asId(), model.playerId)
+        assertEquals(2, model.playerNumber)
     }
 
     @Test
     fun `MoveActionDTO toModel works properly without piece movement`() {
         val wallPlacementDto = WallPlacementDTO(EdgeCoordinate(coord(5, 3), coord(5, 4)))
         val dto = MoveActionDTO(null, wallPlacementDto)
-        val model = dto.toModel("player-2".asId())
+        val model = dto.toModel(2)
 
         assertNull(model.pieceMovement)
         assertEquals(wallPlacementDto.wallPosition, model.wallPlacement.wallPosition)
-        assertEquals("player-2".asId(), model.playerId)
+        assertEquals(2, model.playerNumber)
     }
 }

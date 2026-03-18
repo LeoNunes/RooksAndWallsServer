@@ -22,16 +22,16 @@ class GameStateTest {
         val gameView = mockk<GameView>()
         val board = mockk<Board>()
         val config = GameConfigDefaultValues
-        val player1 = Player(GuestUserImpl("player-0"))
-        val player2 = Player(GuestUserImpl("player-1"))
+        val player1 = Player(GuestUserImpl("player-0"), 0)
+        val player2 = Player(GuestUserImpl("player-1"), 1)
         val players = listOf(player1, player2)
         val pieces = listOf(
-            Piece(0.asId(), player1, coord(0, 0), board),
-            Piece(1.asId(), player1, coord(1, 3), board),
-            Piece(2.asId(), player1, coord(2, 5), board),
-            Piece(3.asId(), player2, coord(8, 4), board),
-            Piece(4.asId(), player2, coord(3, 1), board),
-            Piece(5.asId(), player2, coord(5, 2), board)
+            Piece(0.asId(), 0, coord(0, 0), board),
+            Piece(1.asId(), 0, coord(1, 3), board),
+            Piece(2.asId(), 0, coord(2, 5), board),
+            Piece(3.asId(), 1, coord(8, 4), board),
+            Piece(4.asId(), 1, coord(3, 1), board),
+            Piece(5.asId(), 1, coord(5, 2), board)
         )
         val walls = listOf(
             Wall(EdgeCoordinate(coord(2, 3), coord(3, 3))),
@@ -39,18 +39,18 @@ class GameStateTest {
             Wall(EdgeCoordinate(coord(7, 2), coord(6, 2))),
         )
         val deadPieces = listOf(
-            Piece(6.asId(), player1, coord(7, 7), board),
-            Piece(7.asId(), player1, coord(4, 7), board),
-            Piece(8.asId(), player2, coord(6, 5), board),
+            Piece(6.asId(), 0, coord(7, 7), board),
+            Piece(7.asId(), 0, coord(4, 7), board),
+            Piece(8.asId(), 1, coord(6, 5), board),
         )
 
         every { gameView.player } returns player1
         every { gameView.id } returns "20".asId<Game, String>()
         every { gameView.config } returns config
         every { gameView.gameStage } returns GameStage.PiecePlacement
-        every { gameView.currentTurn } returns player2
+        every { gameView.currentTurn } returns 1
         every { gameView.players } returns players
-        every { gameView.remainingPlayers } returns players
+        every { gameView.remainingPlayers } returns listOf(0, 1)
         every { gameView.pieces } returns pieces
         every { gameView.walls } returns walls
         every { gameView.deadPieces } returns deadPieces
@@ -63,17 +63,14 @@ class GameStateTest {
         assert(dto.config.boardRows == config.boardRows)
         assert(dto.config.boardColumns == config.boardColumns)
         assertEquals(GameStage.PiecePlacement, dto.stage)
-        assertEquals(player2.id.get(), dto.currentTurn)
+        assertEquals(1, dto.currentTurn)
         assertEquals(
             players.map { PlayerDTO(it.id.get(), "Guest", ConnectionStatus.Connected) }.toSet(),
             dto.players.toSet()
         )
+        assertEquals(listOf(0, 1).toSet(), dto.remainingPlayers.toSet())
         assertEquals(
-            players.map { PlayerDTO(it.id.get(), "Guest", ConnectionStatus.Connected) }.toSet(),
-            dto.remainingPlayers.toSet()
-        )
-        assertEquals(
-            pieces.map { PieceDTO(it.id.get(), it.owner.id.get(), it.position) }.toSet(),
+            pieces.map { PieceDTO(it.id.get(), it.owner, it.position) }.toSet(),
             dto.pieces.toSet()
         )
         assertEquals(
@@ -81,7 +78,7 @@ class GameStateTest {
             dto.walls.toSet()
         )
         assertEquals(
-            deadPieces.map { PieceDTO(it.id.get(), it.owner.id.get(), it.position) }.toSet(),
+            deadPieces.map { PieceDTO(it.id.get(), it.owner, it.position) }.toSet(),
             dto.deadPieces.toSet()
         )
 

@@ -10,10 +10,10 @@ data class GameStateDTO(
     val gameId: String,
     val config: GameConfigDTO,
     val stage: GameStage,
-    val currentTurn: String?,
+    val currentTurn: Int?,
     val playerId: String,
     val players: List<PlayerDTO>,
-    val remainingPlayers: List<PlayerDTO>,
+    val remainingPlayers: List<Int>,
     val pieces: List<PieceDTO>,
     val walls: List<WallDTO>,
     val deadPieces: List<PieceDTO>
@@ -28,8 +28,8 @@ data class PlayerDTO(val id: String, val displayName: String, val connectionStat
 fun Player.toDto(): PlayerDTO = PlayerDTO(id.get(), displayName, connectionStatus)
 
 @Serializable
-data class PieceDTO(val id: Int, val owner: String, val position: SquareCoordinate)
-fun Piece.toDto(): PieceDTO = PieceDTO(id.get(), owner.id.get(), position)
+data class PieceDTO(val id: Int, val owner: Int, val position: SquareCoordinate)
+fun Piece.toDto(): PieceDTO = PieceDTO(id.get(), owner, position)
 
 @Serializable
 data class WallDTO(val position: EdgeCoordinate)
@@ -37,13 +37,13 @@ fun Wall.toDto(): WallDTO = WallDTO(position)
 
 fun GameView.getStateDto(): GameStateDTO {
     return GameStateDTO(
-        gameId = this.id.get().toString(),
+        gameId = this.id.get(),
         config = config.toDto(),
         stage = gameStage,
-        currentTurn = currentTurn?.id?.get(),
+        currentTurn = currentTurn,
         playerId = player.id.get(),
         players = players.map { it.toDto() },
-        remainingPlayers = remainingPlayers.map { it.toDto() },
+        remainingPlayers = remainingPlayers,
         pieces = pieces.map { it.toDto() },
         walls = walls.map { it.toDto() },
         deadPieces = deadPieces.map { it.toDto() },

@@ -1,58 +1,56 @@
 package me.leonunes.games.rooksandwalls.model
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import me.leonunes.games.rooksandwalls.ai.AiDifficulty
 import me.leonunes.games.rooksandwalls.ai.AiPlayerRunner
-import me.leonunes.games.rooksandwalls.ai.AiStrategy
-import me.leonunes.games.rooksandwalls.ai.RandomAiStrategy
-import me.leonunes.games.users.AiUser
+import me.leonunes.games.rooksandwalls.ai.getUser
+import me.leonunes.games.rooksandwalls.ai.toAiStrategy
 import me.leonunes.games.users.User
 
-class GameManager(val game: Game) {
-    private val _players = mutableListOf<Player>()
+class GameUpdate
+
+class GameManager(val game: Game, val playersManager: PlayersManager) {
     private val mutex = Mutex()
-    private var aiCount = 0
-    val players: List<Player> get() = _players.toList()
+    private val updateChannels: MutableList<SendChannel<GameUpdate>> = mutableListOf()
 
-    suspend fun joinGame(user: User): GameView = mutex.withLock {
-        joinGameInternal(user)
+    val players: List<Player> get() = playersManager.players
+
+    init {
+        playersManager.observe(object : PlayersManagerObserver {
+            override suspend fun onPlayerAdded(player: Player) = onUpdate()
+            override suspend fun onPlayerConnected(player: Player) = onUpdate()
+            override suspend fun onPlayerDisconnected(player: Player) = onUpdate()
+        })
     }
 
-    suspend fun addAiPlayer(scope: CoroutineScope, strategy: AiStrategy = RandomAiStrategy()): GameView = mutex.withLock {
-        if (game.gameStage != GameStage.WaitingForPlayers) throw GameAlreadyStartedException()
-        val aiUser = AiUser(id = "ai-${game.id.get()}-$aiCount")
-        aiCount++
-        val gameView = joinGameInternal(aiUser)
-        AiPlayerRunner(game, gameView.player.id, strategy).start(scope)
-        gameView
-    }
-
-    // TODO: Send a message in the WS
-    suspend fun disconnectPlayer(playerId: PlayerId): Unit = mutex.withLock {
-        val player = _players.find { it.id == playerId } ?: return@withLock
-        player.connectionStatus = ConnectionStatus.Disconnected
-    }
-
-    private suspend fun joinGameInternal(user: User): GameView {
-        val existingPlayer = _players.find { it.user.id == user.id }
-        if (existingPlayer != null) {
-            reconnect(existingPlayer)
-            return GameView(this, existingPlayer)
+    private suspend fun onUpdate() {
+        if (game.gameStage == GameStage.NotStarted && playersManager.areAllPlayersConnected()) {
+            game.start()
         }
-        if (_players.size >= game.config.numberOfPlayers) throw GameFullException()
 
-        val player = Player(user)
-        _players.add(player)
-
-        if (_players.size == game.config.numberOfPlayers) {
-            game.start(_players.toList())
+        updateChannels.forEach {
+            it.send(GameUpdate())
         }
+    }
+
+    suspend fun connectPlayer(user: User): GameView = mutex.withLock {
+        val player = playersManager.addPlayer(user)
+        playersManager.connectPlayer(user)
         return GameView(this, player)
     }
 
-    // TODO: Send a message in the WS
-    private fun reconnect(player: Player) {
-        player.connectionStatus = ConnectionStatus.Connected
+    suspend fun disconnectPlayer(user: User) = mutex.withLock {
+        playersManager.disconnectPlayer(user)
+    }
+
+    suspend fun addAiPlayer(scope: CoroutineScope, difficulty: AiDifficulty): GameView = mutex.withLock {
+        val aiUser = difficulty.getUser()
+        val player = playersManager.addPlayer(aiUser)
+        val gameView = GameView(this, player)
+        AiPlayerRunner(game, gameView.player.playerNumber, difficulty.toAiStrategy()).start(scope)
+        gameView
     }
 }

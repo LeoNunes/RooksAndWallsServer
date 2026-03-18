@@ -6,26 +6,26 @@ import me.leonunes.games.common.coord
 import me.leonunes.games.rooksandwalls.model.*
 
 interface AiStrategy {
-    fun chooseAction(game: Game, playerId: PlayerId): GameAction
+    fun chooseAction(game: Game, playerNumber: PlayerNumber): GameAction
 }
 
 class RandomAiStrategy : AiStrategy {
-    override fun chooseAction(game: Game, playerId: PlayerId): GameAction {
+    override fun chooseAction(game: Game, playerNumber: PlayerNumber): GameAction {
         return when (game.gameStage) {
-            GameStage.PiecePlacement -> choosePiecePlacement(game, playerId)
-            GameStage.Moves -> chooseMoveAction(game, playerId)
+            GameStage.PiecePlacement -> choosePiecePlacement(game, playerNumber)
+            GameStage.Moves -> chooseMoveAction(game, playerNumber)
             else -> throw IllegalStateException("AI asked to act in stage ${game.gameStage}")
         }
     }
 
-    private fun choosePiecePlacement(game: Game, playerId: PlayerId): AddPieceAction {
+    private fun choosePiecePlacement(game: Game, playerNumber: PlayerNumber): AddPieceAction {
         val occupied = game.pieces.map { it.position }.toSet()
         val empty = allSquares(game).filter { it !in occupied }
-        return AddPieceAction(playerId, empty.random())
+        return AddPieceAction(playerNumber, empty.random())
     }
 
-    private fun chooseMoveAction(game: Game, playerId: PlayerId): MoveAction {
-        val myPieces = game.pieces.filter { it.owner.id == playerId }
+    private fun chooseMoveAction(game: Game, playerNumber: PlayerNumber): MoveAction {
+        val myPieces = game.pieces.filter { it.owner == playerNumber }
         val moves = myPieces.flatMap { piece ->
             piece.movement.getPossibleDestinations().map { dest -> piece to dest }
         }
@@ -38,7 +38,7 @@ class RandomAiStrategy : AiStrategy {
         val availableWalls = allEdges(game).filter { it !in occupiedWalls }
         val wallPosition = availableWalls.random()
 
-        return MoveAction(playerId, pieceMovement, WallPlacement(wallPosition))
+        return MoveAction(playerNumber, pieceMovement, WallPlacement(wallPosition))
     }
 
     private fun allSquares(game: Game): List<SquareCoordinate> =

@@ -6,11 +6,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.leonunes.games.rooksandwalls.model.Game
 import me.leonunes.games.rooksandwalls.model.GameStage
-import me.leonunes.games.rooksandwalls.model.PlayerId
+import me.leonunes.games.rooksandwalls.model.PlayerNumber
 
 class AiPlayerRunner(
     private val game: Game,
-    private val playerId: PlayerId,
+    private val playerNumber: PlayerNumber,
     private val strategy: AiStrategy
 ) {
     fun start(scope: CoroutineScope) {
@@ -30,9 +30,9 @@ class AiPlayerRunner(
 
     private suspend fun maybeAct() {
         if (game.gameStage == GameStage.Completed) return
-        if (game.gameStage == GameStage.WaitingForPlayers) return
-        if (game.currentTurn?.id != playerId) return
-        val action = withContext(Dispatchers.Default) { strategy.chooseAction(game, playerId) }
+        if (game.gameStage == GameStage.NotStarted) return
+        if (game.currentTurn != playerNumber) return
+        val action = withContext(Dispatchers.Default) { strategy.chooseAction(game, playerNumber) }
         game.processAction(action)
     }
 }

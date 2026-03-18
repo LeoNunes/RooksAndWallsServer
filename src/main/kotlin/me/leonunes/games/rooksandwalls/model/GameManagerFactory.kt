@@ -2,12 +2,13 @@ package me.leonunes.games.rooksandwalls.model
 
 import java.util.concurrent.ConcurrentHashMap
 
-class GameManagerFactory {
+class GameManagerFactory(private val gameFactory: GameFactory, private val playerManagerFactory: PlayersManagerFactory) {
     private val managers = ConcurrentHashMap<GameId, GameManager>()
 
-    fun createGame(config: GameConfig? = null): GameManager {
-        val game = if (config != null) GameFactory.createGame(config) else GameFactory.createGame()
-        val manager = GameManager(game)
+    fun createGame(config: GameConfig): GameManager {
+        val playerManager = playerManagerFactory.createPlayerManager(config.numberOfPlayers)
+        val game = gameFactory.createGame(config)
+        val manager = GameManager(game, playerManager)
         managers[game.id] = manager
         return manager
     }

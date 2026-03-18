@@ -1,6 +1,5 @@
 package me.leonunes.games.rooksandwalls.ai
 
-import kotlinx.serialization.Serializable
 import me.leonunes.games.rooksandwalls.model.*
 import kotlin.math.ln
 import kotlin.math.sqrt
@@ -57,30 +56,24 @@ data class MctsConfig(
     }
 }
 
-@Serializable
-enum class AiDifficulty {
-    RANDOM, EASY, MEDIUM, HARD, MAXIMUM;
-
-    fun toAiStrategy(): AiStrategy = when (this) {
-        RANDOM  -> RandomAiStrategy()
-        EASY    -> MctsAiStrategy(MctsConfig.EASY)
-        MEDIUM  -> MctsAiStrategy(MctsConfig.MEDIUM)
-        HARD    -> MctsAiStrategy(MctsConfig.HARD)
-        MAXIMUM -> MctsAiStrategy(MctsConfig.MAXIMUM)
-    }
+fun AiDifficulty.toAiStrategy(): AiStrategy = when (this) {
+    AiDifficulty.EASY    -> MctsAiStrategy(MctsConfig.EASY)
+    AiDifficulty.MEDIUM  -> MctsAiStrategy(MctsConfig.MEDIUM)
+    AiDifficulty.HARD    -> MctsAiStrategy(MctsConfig.HARD)
+    AiDifficulty.MAXIMUM -> MctsAiStrategy(MctsConfig.MAXIMUM)
 }
 
 class MctsAiStrategy(private val config: MctsConfig) : AiStrategy {
     private val placement = RandomAiStrategy()
 
-    override fun chooseAction(game: Game, playerId: PlayerId): GameAction =
+    override fun chooseAction(game: Game, playerNumber: PlayerNumber): GameAction =
         when (game.gameStage) {
-            GameStage.PiecePlacement -> placement.chooseAction(game, playerId)
-            GameStage.Moves -> chooseMoveAction(game, playerId)
+            GameStage.PiecePlacement -> placement.chooseAction(game, playerNumber)
+            GameStage.Moves -> chooseMoveAction(game, playerNumber)
             else -> throw IllegalStateException("AI asked to act in stage ${game.gameStage}")
         }
 
-    private fun chooseMoveAction(game: Game, playerId: PlayerId): MoveAction {
+    private fun chooseMoveAction(game: Game, playerNumber: PlayerNumber): MoveAction {
         val simGame = SimGame.from(game)
         val root = MctsNode(simGame, move = null, parent = null)
 
@@ -94,7 +87,7 @@ class MctsAiStrategy(private val config: MctsConfig) : AiStrategy {
         }
 
         val bestMove = root.children.maxBy { it.visits }.move!!
-        return bestMove.toMoveAction(game, playerId)
+        return bestMove.toMoveAction(game, playerNumber)
     }
 
     private fun runSimulation(root: MctsNode, policy: PlayoutPolicy) {
@@ -136,9 +129,9 @@ class MctsAiStrategy(private val config: MctsConfig) : AiStrategy {
 // game.pieces in order (no eliminations applied). The root SimGame.state is never mutated
 // during MCTS (only clones are), so this index remains aligned with game.pieces at call time.
 // Only use this function with moves produced from the root node's children.
-private fun SimMove.toMoveAction(game: Game, playerId: PlayerId): MoveAction {
+private fun SimMove.toMoveAction(game: Game, playerNumber: PlayerNumber): MoveAction {
     val pieceMovement = if (pieceIndex != null && destination != null) {
         PieceMovement(game.pieces[pieceIndex].id, destination)
     } else null
-    return MoveAction(playerId, pieceMovement, WallPlacement(wallPosition))
+    return MoveAction(playerNumber, pieceMovement, WallPlacement(wallPosition))
 }

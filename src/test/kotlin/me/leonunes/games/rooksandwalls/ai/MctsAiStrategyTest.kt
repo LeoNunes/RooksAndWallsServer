@@ -13,7 +13,7 @@ class MctsAiStrategyTest {
     fun `chooseAction delegates to RandomAiStrategy during PiecePlacement stage`() {
         val game = createGameWithPlayers(GameConfig(numberOfPlayers = 2, piecesPerPlayer = 2, boardRows = 8, boardColumns = 8))
         val strategy = MctsAiStrategy(MctsConfig.EASY)
-        val action = strategy.chooseAction(game, game.currentTurn!!.id)
+        val action = strategy.chooseAction(game, game.currentTurn!!)
         assertIs<AddPieceAction>(action)
     }
 
@@ -23,7 +23,7 @@ class MctsAiStrategyTest {
         val game = createGameWithPlayers(GameConfigDefaultValues)
         game.runAddPieceActions()
         val strategy = MctsAiStrategy(MctsConfig.EASY)
-        val action = strategy.chooseAction(game, game.currentTurn!!.id)
+        val action = strategy.chooseAction(game, game.currentTurn!!)
         assertIs<MoveAction>(action)
     }
 
@@ -52,7 +52,7 @@ class MctsAiStrategyTest {
             game.processAction(AddPieceAction(game.player2, coord(0, 0)))
 
             // Round 1, Player 0: move (0,2)→(0,1), place wall below (0,0)
-            val piece0 = game.pieces.find { it.owner.id == game.player1 }!!
+            val piece0 = game.pieces.find { it.owner == game.player1 }!!
             game.processAction(MoveAction(game.player1,
                 PieceMovement(piece0.id, coord(0, 1)),
                 WallPlacement(EdgeCoordinate(coord(0, 0), coord(1, 0)))))
@@ -64,7 +64,7 @@ class MctsAiStrategyTest {
 
         // Round 2, Player 0: MCTS should find the killing wall (0,0)-(0,1).
         // Placing it encloses (0,0) in a 1-square region → player 1 immediately eliminated → instant win.
-        val playerId = game.currentTurn!!.id
+        val playerId = game.currentTurn!!
         val killingWall = EdgeCoordinate(coord(0, 0), coord(0, 1))
 
         // HeuristicPlayoutPolicy strongly biases toward opponent-killing walls, guaranteeing

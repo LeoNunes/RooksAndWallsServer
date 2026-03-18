@@ -14,20 +14,20 @@ class RandomAiStrategyTest {
     @Test
     fun `chooseAction returns AddPieceAction during piece placement`() = runBlocking {
         val game = createGameWithPlayers(GameConfig(numberOfPlayers = 2, piecesPerPlayer = 2, boardRows = 8, boardColumns = 8))
-        val playerId = game.player1
+        val playerNumber = game.player1
 
-        val action = strategy.chooseAction(game, playerId)
+        val action = strategy.chooseAction(game, playerNumber)
 
         assertIs<AddPieceAction>(action)
-        assertEquals(playerId, action.playerId)
+        assertEquals(playerNumber, action.playerNumber)
     }
 
     @Test
     fun `AddPieceAction targets an empty square`() = runBlocking {
         val game = createGameWithPlayers(GameConfig(numberOfPlayers = 2, piecesPerPlayer = 2, boardRows = 8, boardColumns = 8))
-        val playerId = game.player1
+        val playerNumber = game.player1
 
-        val action = strategy.chooseAction(game, playerId) as AddPieceAction
+        val action = strategy.chooseAction(game, playerNumber) as AddPieceAction
 
         assertTrue(game.pieces.none { it.position == action.position })
     }
@@ -37,27 +37,27 @@ class RandomAiStrategyTest {
         val game = createGameWithPlayers(GameConfig(numberOfPlayers = 2, piecesPerPlayer = 2, boardRows = 8, boardColumns = 8))
         // Place all pieces to enter Moves stage
         repeat(4) { i ->
-            val playerId = game.currentTurn!!.id
-            game.processAction(AddPieceAction(playerId, coord(i, 0)))
+            val playerNumber = game.currentTurn!!
+            game.processAction(AddPieceAction(playerNumber, coord(i, 0)))
         }
 
-        val playerId = game.currentTurn!!.id
-        val action = strategy.chooseAction(game, playerId)
+        val playerNumber = game.currentTurn!!
+        val action = strategy.chooseAction(game, playerNumber)
 
         assertIs<MoveAction>(action)
-        assertEquals(playerId, action.playerId)
+        assertEquals(playerNumber, action.playerNumber)
     }
 
     @Test
     fun `MoveAction wall is not already occupied`() = runBlocking {
         val game = createGameWithPlayers(GameConfig(numberOfPlayers = 2, piecesPerPlayer = 2, boardRows = 8, boardColumns = 8))
         repeat(4) { i ->
-            val playerId = game.currentTurn!!.id
-            game.processAction(AddPieceAction(playerId, coord(i, 0)))
+            val playerNumber = game.currentTurn!!
+            game.processAction(AddPieceAction(playerNumber, coord(i, 0)))
         }
 
-        val playerId = game.currentTurn!!.id
-        val action = strategy.chooseAction(game, playerId) as MoveAction
+        val playerNumber = game.currentTurn!!
+        val action = strategy.chooseAction(game, playerNumber) as MoveAction
 
         assertTrue(game.walls.none { it.position == action.wallPlacement.wallPosition })
     }

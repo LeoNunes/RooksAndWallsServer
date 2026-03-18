@@ -14,18 +14,17 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import me.leonunes.games.common.asId
-import me.leonunes.games.rooksandwalls.model.GameManagerFactory
-import me.leonunes.games.users.UserService
-import org.koin.ktor.ext.inject
 import me.leonunes.games.dto.ActionDTO
 import me.leonunes.games.dto.getStateDto
 import me.leonunes.games.rooksandwalls.ai.AiDifficulty
-import me.leonunes.games.rooksandwalls.model.GameAlreadyStartedException
 import me.leonunes.games.rooksandwalls.model.GameConfig
 import me.leonunes.games.rooksandwalls.model.GameFullException
 import me.leonunes.games.rooksandwalls.model.GameId
+import me.leonunes.games.rooksandwalls.model.GameManagerFactory
 import me.leonunes.games.users.InvalidTokenException
 import me.leonunes.games.users.User
+import me.leonunes.games.users.UserService
+import org.koin.ktor.ext.inject
 
 private val logger = KotlinLogging.logger {}
 
@@ -40,7 +39,7 @@ fun Application.configureGame() {
             val body = runCatching { call.receive<CreateGameRequestBody>() }.getOrNull()
             val config = body?.let {
                 GameConfig(it.numberOfPlayers, it.piecesPerPlayer, it.boardRows, it.boardColumns)
-            }
+            } ?: GameConfig()
             val manager = gameManagerFactory.createGame(config)
             logger.info { "game created: ${manager.game.id}" }
             call.respond(CreateGameResponse(manager.game.id.get()))
@@ -54,15 +53,14 @@ fun Application.configureGame() {
                 return@post
             }
             val body = runCatching { call.receive<AddAiPlayerRequestBody>() }.getOrNull()
-            val strategy = (body?.difficulty ?: AiDifficulty.RANDOM).toAiStrategy()
+
+            val difficulty = body?.difficulty ?: AiDifficulty.MEDIUM
             try {
-                val gameView = manager.addAiPlayer(call.application, strategy)
+                val gameView = manager.addAiPlayer(call.application, difficulty)
                 logger.info { "Bot added successfully to game $gameId" }
                 call.respond(AddAiResponse(playerId = gameView.player.id.get(), displayName = gameView.player.displayName))
             } catch (e: GameFullException) {
                 call.respond(HttpStatusCode.Conflict, "Game is full")
-            } catch (e: GameAlreadyStartedException) {
-                call.respond(HttpStatusCode.Conflict, "Game has already started")
             }
         }
 
@@ -85,9 +83,9 @@ fun Application.configureGame() {
             }
 
             // TODO: Handle exceptions
-            val gameView = manager.joinGame(user)
+            val gameView = manager.connectPlayer(user)
 
-            // TODO: In the future, make `manager.joinGame` automatically call `createUpdatesChannel` in the game
+            // TODO: In the future, make `manager.connectPlayer` automatically call `createUpdatesChannel` in the game
             //  and return a `GameView` object (which is a view of the game from the perspective of a player)
             sendSerialized(gameView.getStateDto())
 
@@ -108,7 +106,7 @@ fun Application.configureGame() {
                         try {
                             val dto = receiveDeserialized<ActionDTO>()
                             // TODO: Process action through GameView: gameView.processAction.
-                            manager.game.processAction(dto.getAction(gameView.player.id))
+                            manager.game.processAction(dto.getAction(gameView.player.playerNumber))
                         } catch (e: Exception) {
                             send("Error while executing action: ${e.javaClass.name} ${e.message}")
                         }
@@ -118,7 +116,7 @@ fun Application.configureGame() {
                 // TODO: Find a way to keep track of the connections so that, if player connects on a new WS,
                 //  the previous one is closed and only the new one is kept open. And player status is not
                 //  changed to disconnected
-                manager.disconnectPlayer(gameView.player.id)
+                manager.disconnectPlayer(user)
             }
         }
     }
@@ -153,7 +151,7 @@ class CreateGameResponse(val gameId: String)
 class AddAiPlayerRequest(val gameId: String)
 
 @Serializable
-class AddAiPlayerRequestBody(val difficulty: AiDifficulty = AiDifficulty.RANDOM)
+class AddAiPlayerRequestBody(val difficulty: AiDifficulty)
 
 @Serializable
 class AddAiResponse(val playerId: String, val displayName: String)

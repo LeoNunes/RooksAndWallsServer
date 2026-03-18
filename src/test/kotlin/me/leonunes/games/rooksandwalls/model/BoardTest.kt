@@ -15,7 +15,7 @@ class BoardTest {
 
     @Test
     fun `Piece movement is defined correctly`() {
-        val piece = Piece(3.asId(), mockk<Player>(), coord(2, 5), mockk<Board>())
+        val piece = Piece(3.asId(), 0, coord(2, 5), mockk<Board>())
 
         assertEquals(3, piece.movement.validations.size)
         assertNotNull(piece.movement.validations.find { it is InsideBoardStepValidation })

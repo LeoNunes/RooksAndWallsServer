@@ -8,8 +8,8 @@ import me.leonunes.games.rooksandwalls.model.AddPieceAction
 import me.leonunes.games.rooksandwalls.model.GameAction
 import me.leonunes.games.rooksandwalls.model.MoveAction
 import me.leonunes.games.rooksandwalls.model.PieceMovement
+import me.leonunes.games.rooksandwalls.model.PlayerNumber
 import me.leonunes.games.rooksandwalls.model.WallPlacement
-import me.leonunes.games.rooksandwalls.model.PlayerId
 import kotlin.reflect.full.memberProperties
 
 @Serializable
@@ -17,7 +17,7 @@ data class ActionDTO(
     val addPiece: AddPieceDTO? = null,
     val move: MoveActionDTO? = null,
 ) {
-    fun getAction(player: PlayerId) : GameAction {
+    fun getAction(playerNumber: PlayerNumber) : GameAction {
         val nonNullProperties = this::class.memberProperties
             .mapNotNull { it.getter.call(this) as? ActionDTOBase }
 
@@ -25,17 +25,17 @@ data class ActionDTO(
             throw Exception("There must be exactly one action")
         }
 
-        return nonNullProperties[0].toModel(player)
+        return nonNullProperties[0].toModel(playerNumber)
     }
 }
 
 interface ActionDTOBase {
-    fun toModel(player: PlayerId) : GameAction
+    fun toModel(playerNumber: PlayerNumber) : GameAction
 }
 
 @Serializable
 data class AddPieceDTO(val position: SquareCoordinate) : ActionDTOBase {
-    override fun toModel(player: PlayerId) = AddPieceAction(player, position)
+    override fun toModel(playerNumber: PlayerNumber) = AddPieceAction(playerNumber, position)
 }
 
 @Serializable
@@ -49,8 +49,8 @@ data class MoveActionDTO(
     val pieceMovement: PieceMovementDTO?,
     val wallPlacement: WallPlacementDTO
 ) : ActionDTOBase {
-    override fun toModel(player: PlayerId) = MoveAction(
-        player,
+    override fun toModel(playerNumber: PlayerNumber) = MoveAction(
+        playerNumber,
         pieceMovement?.let { PieceMovement(it.pieceId.asId(), it.position) },
         WallPlacement(wallPlacement.wallPosition)
     )
