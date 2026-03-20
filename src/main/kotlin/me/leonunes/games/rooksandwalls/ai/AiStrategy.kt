@@ -3,7 +3,14 @@ package me.leonunes.games.rooksandwalls.ai
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.SquareCoordinate
 import me.leonunes.games.common.coord
-import me.leonunes.games.rooksandwalls.model.*
+import me.leonunes.games.rooksandwalls.model.AddPieceAction
+import me.leonunes.games.rooksandwalls.model.Game
+import me.leonunes.games.rooksandwalls.model.GameAction
+import me.leonunes.games.rooksandwalls.model.GameStage
+import me.leonunes.games.rooksandwalls.model.MoveAction
+import me.leonunes.games.rooksandwalls.model.PieceMovement
+import me.leonunes.games.rooksandwalls.model.PlayerNumber
+import me.leonunes.games.rooksandwalls.model.WallPlacement
 
 interface AiStrategy {
     fun chooseAction(game: Game, playerNumber: PlayerNumber): GameAction

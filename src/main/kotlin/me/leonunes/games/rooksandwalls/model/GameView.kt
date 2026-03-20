@@ -1,29 +1,22 @@
 package me.leonunes.games.rooksandwalls.model
 
+import kotlinx.coroutines.channels.ReceiveChannel
+
 /**
  * Represent the view of the game from the perspective of a Player
  */
-class GameView(private val gameManager: GameManager, val player: Player) {
-    val id: GameId
-        get() = game().id
-    val config: GameConfig
-        get() = game().config
-    val gameStage: GameStage
-        get() = game().gameStage
-    val currentTurn: PlayerNumber?
-        get() = game().currentTurn
-    val players: List<Player>
-        get() = gameManager.players
-    val remainingPlayers: List<PlayerNumber>
-        get() = game().remainingPlayers
-    val pieces: List<Piece>
-        get() = game().pieces
-    val deadPieces: List<Piece>
-        get() = game().deadPieces
-    val walls: List<Wall>
-        get() = game().walls
+class GameView(private val gameManager: GameManager, val player: Player, val updatesChannel: ReceiveChannel<GameUpdate>) {
+    internal val game: Game get() = gameManager.game
 
-    val updatesChannel = game().createUpdatesChannel()
+    val id: GameId get() = game.id
+    val config: GameConfig get() = game.config
+    val gameStage: GameStage get() = game.gameStage
+    val currentTurn: PlayerNumber? get() = game.currentTurn
+    val players: List<Player> get() = gameManager.players
+    val remainingPlayers: List<PlayerNumber> get() = game.remainingPlayers
+    val pieces: List<Piece> get() = game.pieces
+    val deadPieces: List<Piece> get() = game.deadPieces
+    val walls: List<Wall> get() = game.walls
 
-    private fun game(): Game = gameManager.game
+    suspend fun processAction(action: GameAction) = gameManager.processAction(action)
 }

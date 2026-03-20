@@ -1,6 +1,9 @@
 package me.leonunes.games.rooksandwalls.model
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -19,27 +22,40 @@ class GameManager(val game: Game, val playersManager: PlayersManager) {
     val players: List<Player> get() = playersManager.players
 
     init {
+        game.observe(object : GameObserver {
+            override suspend fun onGameUpdated() {
+                updateChannels.forEach { it.send(GameUpdate()) }
+                if (game.gameStage == GameStage.Completed) {
+                    updateChannels.forEach { it.close() }
+                }
+            }
+        })
+
         playersManager.observe(object : PlayersManagerObserver {
-            override suspend fun onPlayerAdded(player: Player) = onUpdate()
-            override suspend fun onPlayerConnected(player: Player) = onUpdate()
-            override suspend fun onPlayerDisconnected(player: Player) = onUpdate()
+            override suspend fun onPlayerAdded(player: Player) = onPlayerUpdate()
+            override suspend fun onPlayerConnected(player: Player) = onPlayerUpdate()
+            override suspend fun onPlayerDisconnected(player: Player) = onPlayerUpdate()
         })
     }
 
-    private suspend fun onUpdate() {
+    private suspend fun onPlayerUpdate() {
         if (game.gameStage == GameStage.NotStarted && playersManager.areAllPlayersConnected()) {
-            game.start()
+            game.start()  // triggers onGameUpdated observer above
+        } else {
+            updateChannels.forEach { it.send(GameUpdate()) }
         }
+    }
 
-        updateChannels.forEach {
-            it.send(GameUpdate())
-        }
+    private fun createAndRegisterChannel(): ReceiveChannel<GameUpdate> {
+        val channel = Channel<GameUpdate>(CONFLATED)
+        updateChannels.add(channel)
+        return channel
     }
 
     suspend fun connectPlayer(user: User): GameView = mutex.withLock {
         val player = playersManager.addPlayer(user)
         playersManager.connectPlayer(user)
-        return GameView(this, player)
+        GameView(this, player, createAndRegisterChannel())
     }
 
     suspend fun disconnectPlayer(user: User) = mutex.withLock {
@@ -49,8 +65,12 @@ class GameManager(val game: Game, val playersManager: PlayersManager) {
     suspend fun addAiPlayer(scope: CoroutineScope, difficulty: AiDifficulty): GameView = mutex.withLock {
         val aiUser = difficulty.getUser()
         val player = playersManager.addPlayer(aiUser)
-        val gameView = GameView(this, player)
-        AiPlayerRunner(game, gameView.player.playerNumber, difficulty.toAiStrategy()).start(scope)
+        val gameView = GameView(this, player, createAndRegisterChannel())
+        AiPlayerRunner(gameView, difficulty.toAiStrategy()).start(scope)
         gameView
+    }
+
+    suspend fun processAction(action: GameAction) = mutex.withLock {
+        game.processAction(action)
     }
 }

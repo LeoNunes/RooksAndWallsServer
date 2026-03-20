@@ -85,8 +85,6 @@ fun Application.configureGame() {
             // TODO: Handle exceptions
             val gameView = manager.connectPlayer(user)
 
-            // TODO: In the future, make `manager.connectPlayer` automatically call `createUpdatesChannel` in the game
-            //  and return a `GameView` object (which is a view of the game from the perspective of a player)
             sendSerialized(gameView.getStateDto())
 
             launch {
@@ -105,8 +103,7 @@ fun Application.configureGame() {
                     while (isActive) {
                         try {
                             val dto = receiveDeserialized<ActionDTO>()
-                            // TODO: Process action through GameView: gameView.processAction.
-                            manager.game.processAction(dto.getAction(gameView.player.playerNumber))
+                            gameView.processAction(dto.getAction(gameView.player.playerNumber))
                         } catch (e: Exception) {
                             send("Error while executing action: ${e.javaClass.name} ${e.message}")
                         }

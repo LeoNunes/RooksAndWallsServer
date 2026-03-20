@@ -4,18 +4,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.leonunes.games.rooksandwalls.model.Game
 import me.leonunes.games.rooksandwalls.model.GameStage
-import me.leonunes.games.rooksandwalls.model.PlayerNumber
+import me.leonunes.games.rooksandwalls.model.GameView
 
 class AiPlayerRunner(
-    private val game: Game,
-    private val playerNumber: PlayerNumber,
+    private val gameView: GameView,
     private val strategy: AiStrategy
 ) {
     fun start(scope: CoroutineScope) {
         scope.launch {
-            val channel = game.createUpdatesChannel()
+            val channel = gameView.updatesChannel
             try {
                 // Act immediately in case it's already the AI's turn when the runner starts
                 maybeAct()
@@ -28,11 +26,13 @@ class AiPlayerRunner(
         }
     }
 
+    private val playerNumber get() = gameView.player.playerNumber
+
     private suspend fun maybeAct() {
-        if (game.gameStage == GameStage.Completed) return
-        if (game.gameStage == GameStage.NotStarted) return
-        if (game.currentTurn != playerNumber) return
-        val action = withContext(Dispatchers.Default) { strategy.chooseAction(game, playerNumber) }
-        game.processAction(action)
+        if (gameView.gameStage == GameStage.Completed) return
+        if (gameView.gameStage == GameStage.NotStarted) return
+        if (gameView.currentTurn != playerNumber) return
+        val action = withContext(Dispatchers.Default) { strategy.chooseAction(gameView.game, playerNumber) }
+        gameView.processAction(action)
     }
 }

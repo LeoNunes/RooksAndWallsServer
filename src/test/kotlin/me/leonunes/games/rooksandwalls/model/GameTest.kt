@@ -1,21 +1,14 @@
 package me.leonunes.games.rooksandwalls.model
 
-import io.mockk.junit4.MockKRule
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import me.leonunes.games.assertEach
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.coord
 import me.leonunes.games.common.edgeDown
 import me.leonunes.games.common.edgeUp
-import org.junit.Rule
 import kotlin.test.*
 
-@ExperimentalCoroutinesApi
 class GameTest {
-    @get:Rule
-    val mockkRule = MockKRule(this)
-
     @Test
     fun `game start in WaitingForPlayers stage`() {
         val game = GameFactory().createGame(GameConfigDefaultValues)
@@ -24,15 +17,17 @@ class GameTest {
     }
 
     @Test
-    fun `channels are notified when game starts`() = runBlocking {
+    fun `observers are notified when game starts`() = runBlocking {
         val game = GameFactory().createGame(GameConfigDefaultValues)
-        val channel1 = game.createUpdatesChannel()
-        val channel2 = game.createUpdatesChannel()
+        var notified1 = false
+        var notified2 = false
+        game.observe(object : GameObserver { override suspend fun onGameUpdated() { notified1 = true } })
+        game.observe(object : GameObserver { override suspend fun onGameUpdated() { notified2 = true } })
 
         game.start()
 
-        assertTrue(channel1.receiveInstant() != null)
-        assertTrue(channel2.receiveInstant() != null)
+        assertTrue(notified1)
+        assertTrue(notified2)
     }
 
     @Test
@@ -44,16 +39,17 @@ class GameTest {
     }
 
     @Test
-    fun `channels are notified when action is processed`() = runBlocking {
+    fun `observers are notified when action is processed`() = runBlocking {
         val game = createGameWithPlayers()
-
-        val channel1 = game.createUpdatesChannel()
-        val channel2 = game.createUpdatesChannel()
+        var notified1 = false
+        var notified2 = false
+        game.observe(object : GameObserver { override suspend fun onGameUpdated() { notified1 = true } })
+        game.observe(object : GameObserver { override suspend fun onGameUpdated() { notified2 = true } })
 
         game.processAction(AddPieceAction(game.currentTurn!!, coord(0, 0)))
 
-        assertTrue(channel1.receiveInstant() != null)
-        assertTrue(channel2.receiveInstant() != null)
+        assertTrue(notified1)
+        assertTrue(notified2)
     }
 
     @Test
@@ -275,20 +271,19 @@ class GameTest {
     }
 
     @Test
-    fun `channels are closed after game ends`() = runBlocking {
-        with(createGameWithPlayers()) {
-            val channel1 = createUpdatesChannel()
-            val channel2 = createUpdatesChannel()
+    fun `observers are notified when game ends`() = runBlocking {
+        val game = createGameWithPlayers()
+        var completedNotified = false
+        game.observe(object : GameObserver {
+            override suspend fun onGameUpdated() {
+                if (game.gameStage == GameStage.Completed) completedNotified = true
+            }
+        })
 
-            runAddPieceActions()
-            runWinningMovePieceActions()
+        game.runAddPieceActions()
+        game.runWinningMovePieceActions()
 
-            channel1.receiveInstant()
-            channel2.receiveInstant()
-
-            assertTrue(channel1.isClosedForReceive)
-            assertTrue(channel2.isClosedForReceive)
-        }
+        assertTrue(completedNotified)
     }
 
     @Test

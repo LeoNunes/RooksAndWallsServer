@@ -1,16 +1,14 @@
 package me.leonunes.games.rooksandwalls.model
 
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.leonunes.games.common.*
 
 typealias GameId = Id<Game, String>
+
+interface GameObserver {
+    suspend fun onGameUpdated() = Unit
+}
 
 interface Game {
     val id: GameId
@@ -23,7 +21,7 @@ interface Game {
     val walls: List<Wall>
     suspend fun start()
     suspend fun processAction(action: GameAction)
-    fun createUpdatesChannel(): ReceiveChannel<GameUpdate>
+    fun observe(observer: GameObserver)
 }
 
 class GameImp internal constructor(override val id: GameId, override val config: GameConfig) : Game {
@@ -47,8 +45,9 @@ class GameImp internal constructor(override val id: GameId, override val config:
 
     private var nextPieceId = 0
 
-    private val updateChannels: MutableList<SendChannel<GameUpdate>> = mutableListOf()
-    private val gameMutex: Mutex = Mutex()
+    private val observers: MutableList<GameObserver> = mutableListOf()
+
+    override fun observe(observer: GameObserver) { observers.add(observer) }
 
     private fun getPieceById(id: PieceId) : Piece = board.pieces.find { it.id == id } ?: throw IllegalArgumentException("Piece is dead or doesn't exist on this game")
     private fun getPieceByPosition(position: SquareCoordinate) : Piece? = board.pieces.find { it.position == position }
@@ -57,12 +56,10 @@ class GameImp internal constructor(override val id: GameId, override val config:
     private fun assertPlayersTurn(playerNumber: PlayerNumber) = if (currentTurn != playerNumber) throw NotPlayersTurnException() else Unit
 
     override suspend fun start() {
-        gameMutex.withLock {
-            assertGameStage(GameStage.NotStarted)
-            remainingPlayers = (0 until config.numberOfPlayers).toList()
-            startPiecePlacementStage()
-            notifyUpdates()
-        }
+        assertGameStage(GameStage.NotStarted)
+        remainingPlayers = (0 until config.numberOfPlayers).toList()
+        startPiecePlacementStage()
+        notifyUpdates()
     }
 
     private fun startPiecePlacementStage() {
@@ -191,26 +188,15 @@ class GameImp internal constructor(override val id: GameId, override val config:
     }
 
     override suspend fun processAction(action: GameAction) {
-        gameMutex.withLock {
-            when (action) {
-                is AddPieceAction -> processAddPieceAction(action)
-                is MoveAction -> processMoveAction(action)
-            }
-            notifyUpdates()
+        when (action) {
+            is AddPieceAction -> processAddPieceAction(action)
+            is MoveAction -> processMoveAction(action)
         }
-    }
-
-    override fun createUpdatesChannel() : ReceiveChannel<GameUpdate> {
-        val channel = Channel<GameUpdate>(CONFLATED)
-        updateChannels.add(channel)
-        return channel
+        notifyUpdates()
     }
 
     private suspend fun notifyUpdates() {
-        updateChannels.forEach { it.send(GameUpdate()) }
-        if (gameStage == GameStage.Completed) {
-            updateChannels.forEach { it.close() }
-        }
+        observers.forEach { it.onGameUpdated() }
     }
 }
 

@@ -1,7 +1,5 @@
 package me.leonunes.games.rooksandwalls.model
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.runBlocking
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.coord
@@ -111,7 +109,3 @@ val Game.piece3_1 get() = piecesByPlayer()[player3]!![0].id
 val Game.piece3_2 get() = piecesByPlayer()[player3]!![1].id
 val Game.piece3_3 get() = piecesByPlayer()[player3]!![2].id
 
-@ExperimentalCoroutinesApi
-suspend fun ReceiveChannel<GameUpdate>.receiveInstant() : GameUpdate? {
-    return if (isEmpty) null else receive()
-}

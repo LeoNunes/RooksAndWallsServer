@@ -1,6 +1,12 @@
 package me.leonunes.games.rooksandwalls.ai
 
-import me.leonunes.games.rooksandwalls.model.*
+import me.leonunes.games.rooksandwalls.model.GameAction
+import me.leonunes.games.rooksandwalls.model.Game
+import me.leonunes.games.rooksandwalls.model.GameStage
+import me.leonunes.games.rooksandwalls.model.MoveAction
+import me.leonunes.games.rooksandwalls.model.PieceMovement
+import me.leonunes.games.rooksandwalls.model.PlayerNumber
+import me.leonunes.games.rooksandwalls.model.WallPlacement
 import kotlin.math.ln
 import kotlin.math.sqrt
 
