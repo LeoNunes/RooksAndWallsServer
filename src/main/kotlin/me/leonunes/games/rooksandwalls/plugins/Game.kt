@@ -58,7 +58,7 @@ fun Application.configureGame() {
             try {
                 val gameView = manager.addAiPlayer(call.application, difficulty)
                 logger.info { "Bot added successfully to game $gameId" }
-                call.respond(AddAiResponse(playerId = gameView.player.id.get(), displayName = gameView.player.displayName))
+                call.respond(HttpStatusCode.Created)
             } catch (e: GameFullException) {
                 call.respond(HttpStatusCode.Conflict, "Game is full")
             }
@@ -149,6 +149,3 @@ class AddAiPlayerRequest(val gameId: String)
 
 @Serializable
 class AddAiPlayerRequestBody(val difficulty: AiDifficulty)
-
-@Serializable
-class AddAiResponse(val playerId: String, val displayName: String)

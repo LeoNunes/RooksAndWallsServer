@@ -9,7 +9,7 @@ import me.leonunes.games.rooksandwalls.model.GameAction
 import me.leonunes.games.rooksandwalls.model.GameStage
 import me.leonunes.games.rooksandwalls.model.MoveAction
 import me.leonunes.games.rooksandwalls.model.PieceMovement
-import me.leonunes.games.rooksandwalls.model.PlayerNumber
+import me.leonunes.games.common.player.PlayerNumber
 import me.leonunes.games.rooksandwalls.model.WallPlacement
 
 interface AiStrategy {

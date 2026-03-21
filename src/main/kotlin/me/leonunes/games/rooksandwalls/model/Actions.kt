@@ -2,6 +2,7 @@ package me.leonunes.games.rooksandwalls.model
 
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.SquareCoordinate
+import me.leonunes.games.common.player.PlayerNumber
 
 data class PieceMovement(val pieceId: PieceId, val position: SquareCoordinate)
 data class WallPlacement(val wallPosition: EdgeCoordinate)

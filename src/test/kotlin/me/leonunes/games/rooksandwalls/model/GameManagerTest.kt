@@ -86,7 +86,7 @@ class GameManagerTest {
         manager.connectPlayer(user)
         manager.disconnectPlayer(user)
 
-        assertEquals(ConnectionStatus.Disconnected, manager.players.find { it.id.get() == "user-0" }?.connectionStatus)
+        assertEquals(ConnectionStatus.Disconnected, manager.players.find { it.user.id == "user-0" }?.connectionStatus)
     }
 
     @Test

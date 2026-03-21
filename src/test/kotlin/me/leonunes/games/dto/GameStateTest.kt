@@ -58,7 +58,7 @@ class GameStateTest {
         every { gameView.deadPieces } returns deadPieces
 
         val dto = gameView.getStateDto()
-        assertEquals(player1.id.get(), dto.playerId)
+        assertEquals(player1.playerNumber, dto.playerNumber)
         assertEquals("20", dto.gameId)
         assert(dto.config.numberOfPlayers == config.numberOfPlayers)
         assert(dto.config.piecesPerPlayer == config.piecesPerPlayer)
@@ -67,7 +67,7 @@ class GameStateTest {
         assertEquals(GameStage.PiecePlacement, dto.stage)
         assertEquals(1, dto.currentTurn)
         assertEquals(
-            players.map { PlayerDTO(it.id.get(), "Guest", ConnectionStatus.Connected) }.toSet(),
+            players.map { PlayerDTO(it.playerNumber, it.user.id, "Guest", ConnectionStatus.Connected) }.toSet(),
             dto.players.toSet()
         )
         assertEquals(listOf(0, 1).toSet(), dto.remainingPlayers.toSet())
