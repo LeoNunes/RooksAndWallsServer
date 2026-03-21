@@ -1,4 +1,4 @@
-package me.leonunes.games.rooksandwalls.model
+package me.leonunes.games.common.player
 
 class PlayersManagerFactory {
     fun createPlayerManager(numberOfPlayers: Int): PlayersManager {

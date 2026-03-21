@@ -7,6 +7,9 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import me.leonunes.games.common.player.Player
+import me.leonunes.games.common.player.PlayersManager
+import me.leonunes.games.common.player.PlayersManagerObserver
 import me.leonunes.games.rooksandwalls.ai.AiDifficulty
 import me.leonunes.games.rooksandwalls.ai.AiPlayerRunner
 import me.leonunes.games.rooksandwalls.ai.getUser

@@ -1,8 +1,11 @@
-package me.leonunes.games.dto
+package me.leonunes.games.rooksandwalls.dto
 
 import kotlinx.serialization.Serializable
 import me.leonunes.games.common.EdgeCoordinate
 import me.leonunes.games.common.SquareCoordinate
+import me.leonunes.games.common.player.ConnectionStatus
+import me.leonunes.games.common.player.Player
+import me.leonunes.games.common.player.PlayerId
 import me.leonunes.games.rooksandwalls.model.*
 
 @Serializable

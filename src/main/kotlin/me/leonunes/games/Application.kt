@@ -14,9 +14,10 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import kotlinx.serialization.json.Json
 import me.leonunes.games.di.appModule
-import me.leonunes.games.plugins.configureGame
 import me.leonunes.games.plugins.configureHealthCheck
 import me.leonunes.games.plugins.configureUsers
+import me.leonunes.games.rooksandwalls.di.rooksAndWallsModule
+import me.leonunes.games.rooksandwalls.plugins.configureGame
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 import kotlin.time.Duration.Companion.seconds
@@ -33,7 +34,7 @@ fun main() {
 fun Application.module() {
     install(Koin) {
         slf4jLogger()
-        modules(appModule)
+        modules(appModule, rooksAndWallsModule)
     }
 
     installPlugins()

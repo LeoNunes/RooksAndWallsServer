@@ -1,4 +1,4 @@
-package me.leonunes.games.plugins
+package me.leonunes.games.rooksandwalls.plugins
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
@@ -14,11 +14,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import me.leonunes.games.common.asId
-import me.leonunes.games.dto.ActionDTO
-import me.leonunes.games.dto.getStateDto
+import me.leonunes.games.rooksandwalls.dto.ActionDTO
+import me.leonunes.games.rooksandwalls.dto.getStateDto
 import me.leonunes.games.rooksandwalls.ai.AiDifficulty
 import me.leonunes.games.rooksandwalls.model.GameConfig
-import me.leonunes.games.rooksandwalls.model.GameFullException
+import me.leonunes.games.common.player.GameFullException
 import me.leonunes.games.rooksandwalls.model.GameId
 import me.leonunes.games.rooksandwalls.model.GameManagerFactory
 import me.leonunes.games.users.InvalidTokenException

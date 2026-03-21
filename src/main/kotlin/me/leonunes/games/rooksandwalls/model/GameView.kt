@@ -1,6 +1,8 @@
 package me.leonunes.games.rooksandwalls.model
 
 import kotlinx.coroutines.channels.ReceiveChannel
+import me.leonunes.games.common.player.Player
+import me.leonunes.games.common.player.PlayerNumber
 
 /**
  * Represent the view of the game from the perspective of a Player

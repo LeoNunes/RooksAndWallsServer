@@ -1,4 +1,4 @@
-package me.leonunes.games.dto
+package me.leonunes.games.rooksandwalls.dto
 
 import kotlinx.serialization.Serializable
 import me.leonunes.games.common.EdgeCoordinate

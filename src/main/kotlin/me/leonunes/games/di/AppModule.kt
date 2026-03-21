@@ -1,8 +1,5 @@
 package me.leonunes.games.di
 
-import me.leonunes.games.rooksandwalls.model.GameFactory
-import me.leonunes.games.rooksandwalls.model.GameManagerFactory
-import me.leonunes.games.rooksandwalls.model.PlayersManagerFactory
 import me.leonunes.games.users.UserRepository
 import me.leonunes.games.users.UserService
 import me.leonunes.games.users.auth.CognitoJwtValidator
@@ -28,10 +25,4 @@ val appModule = module {
     }
 
     single { UserService(get(), get()) }
-
-    single<GameFactory> { GameFactory() }
-
-    single { PlayersManagerFactory() }
-
-    single { GameManagerFactory(get(), get()) }
 }

@@ -4,9 +4,11 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.junit4.MockKRule
 import io.mockk.mockk
-import me.leonunes.games.common.EdgeCoordinate
-import me.leonunes.games.common.asId
-import me.leonunes.games.common.coord
+import me.leonunes.games.common.player.EdgeCoordinate
+import me.leonunes.games.common.player.asId
+import me.leonunes.games.common.player.coord
+import me.leonunes.games.common.player.ConnectionStatus
+import me.leonunes.games.common.player.Player
 import me.leonunes.games.rooksandwalls.model.*
 import me.leonunes.games.users.GuestUserImpl
 import org.junit.Rule

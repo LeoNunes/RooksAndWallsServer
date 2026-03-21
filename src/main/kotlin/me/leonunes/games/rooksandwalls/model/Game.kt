@@ -3,6 +3,7 @@ package me.leonunes.games.rooksandwalls.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.leonunes.games.common.*
+import me.leonunes.games.common.player.PlayerNumber
 
 typealias GameId = Id<Game, String>
 

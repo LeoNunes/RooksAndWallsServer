@@ -1,4 +1,4 @@
-package me.leonunes.games.rooksandwalls.model
+package me.leonunes.games.common.player
 
 import me.leonunes.games.users.User
 

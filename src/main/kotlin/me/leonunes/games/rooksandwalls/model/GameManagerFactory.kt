@@ -1,5 +1,6 @@
 package me.leonunes.games.rooksandwalls.model
 
+import me.leonunes.games.common.player.PlayersManagerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 class GameManagerFactory(private val gameFactory: GameFactory, private val playerManagerFactory: PlayersManagerFactory) {

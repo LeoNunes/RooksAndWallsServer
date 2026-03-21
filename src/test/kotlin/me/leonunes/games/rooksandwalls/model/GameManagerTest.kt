@@ -6,6 +6,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import me.leonunes.games.common.player.ConnectionStatus
+import me.leonunes.games.common.player.GameFullException
+import me.leonunes.games.common.player.PlayersManagerFactory
 import me.leonunes.games.rooksandwalls.ai.AiDifficulty
 import me.leonunes.games.users.GuestUserImpl
 import org.junit.Test

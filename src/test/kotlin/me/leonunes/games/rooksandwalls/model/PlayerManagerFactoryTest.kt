@@ -1,6 +1,10 @@
 package me.leonunes.games.rooksandwalls.model
 
 import kotlinx.coroutines.runBlocking
+import me.leonunes.games.common.player.Player
+import me.leonunes.games.common.player.PlayersManager
+import me.leonunes.games.common.player.PlayersManagerFactory
+import me.leonunes.games.common.player.PlayersManagerObserver
 import me.leonunes.games.users.GuestUserImpl
 import org.junit.Test
 import kotlin.test.assertEquals
